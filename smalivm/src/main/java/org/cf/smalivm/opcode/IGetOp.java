@@ -16,6 +16,20 @@ public class IGetOp extends ExecutionContextOp {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(IGetOp.class.getSimpleName());
+    private final int destRegister;
+    private final int instanceRegister;
+    private final String fieldDescriptor;
+    private final VirtualMachine vm;
+
+    public IGetOp(int address, String opName, int childAddress, int destRegister, int instanceRegister,
+                  String fieldDescriptor, VirtualMachine vm) {
+        super(address, opName, childAddress);
+
+        this.destRegister = destRegister;
+        this.instanceRegister = instanceRegister;
+        this.fieldDescriptor = fieldDescriptor;
+        this.vm = vm;
+    }
 
     static IGetOp create(Instruction instruction, int address, VirtualMachine vm) {
         String opName = instruction.getOpcode().name;
@@ -28,21 +42,6 @@ public class IGetOp extends ExecutionContextOp {
         String fieldDescriptor = ReferenceUtil.getFieldDescriptor(reference);
 
         return new IGetOp(address, opName, childAddress, destRegister, instanceRegister, fieldDescriptor, vm);
-    }
-
-    private final int destRegister;
-    private final int instanceRegister;
-    private final String fieldDescriptor;
-    private final VirtualMachine vm;
-
-    public IGetOp(int address, String opName, int childAddress, int destRegister, int instanceRegister,
-                    String fieldDescriptor, VirtualMachine vm) {
-        super(address, opName, childAddress);
-
-        this.destRegister = destRegister;
-        this.instanceRegister = instanceRegister;
-        this.fieldDescriptor = fieldDescriptor;
-        this.vm = vm;
     }
 
     @Override
@@ -59,7 +58,7 @@ public class IGetOp extends ExecutionContextOp {
     public String toString() {
         StringBuilder sb = new StringBuilder(getName());
         sb.append(" r").append(destRegister).append(", r").append(instanceRegister).append(", ")
-                        .append(fieldDescriptor);
+                .append(fieldDescriptor);
 
         return sb.toString();
     }

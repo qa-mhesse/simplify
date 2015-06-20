@@ -1,7 +1,6 @@
 package org.cf.smalivm;
 
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.smalivm.context.HeapItem;
 import org.junit.Test;
 
@@ -20,8 +19,8 @@ public class TestMethodReflector {
     public void testInitCharacterWithChar() {
         char value = 'a';
         TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(1, value, "C");
-        TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, Character.valueOf(value),
-                        "Ljava/lang/Character;");
+        TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, value,
+                "Ljava/lang/Character;");
 
         VMTester.testMethodState(CLASS_NAME, "InitCharacterWithChar()V", initial, expected);
     }
@@ -31,7 +30,7 @@ public class TestMethodReflector {
         boolean value = true;
         TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(1, value, "Z");
         TIntObjectMap<HeapItem> expected = VMTester
-                        .buildRegisterState(0, Boolean.valueOf(value), "Ljava/lang/Boolean;");
+                .buildRegisterState(0, Boolean.valueOf(value), "Ljava/lang/Boolean;");
 
         VMTester.testMethodState(CLASS_NAME, "InitBooleanWithBoolean()V", initial, expected);
     }

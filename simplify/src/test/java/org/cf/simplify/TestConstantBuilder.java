@@ -1,28 +1,13 @@
 package org.cf.simplify;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.context.HeapItem;
 import org.cf.smalivm.type.LocalClass;
 import org.cf.util.SmaliClassUtils;
 import org.jf.dexlib2.Opcode;
 import org.jf.dexlib2.builder.BuilderInstruction;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction11n;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction21c;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction21ih;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction21lh;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction21s;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction31i;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction51l;
-import org.jf.dexlib2.iface.instruction.Instruction;
-import org.jf.dexlib2.iface.instruction.NarrowLiteralInstruction;
-import org.jf.dexlib2.iface.instruction.OneRegisterInstruction;
-import org.jf.dexlib2.iface.instruction.ReferenceInstruction;
-import org.jf.dexlib2.iface.instruction.WideLiteralInstruction;
+import org.jf.dexlib2.builder.instruction.*;
+import org.jf.dexlib2.iface.instruction.*;
 import org.jf.dexlib2.iface.reference.StringReference;
 import org.jf.dexlib2.iface.reference.TypeReference;
 import org.jf.dexlib2.writer.builder.DexBuilder;
@@ -33,6 +18,9 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
+
 @RunWith(Enclosed.class)
 public class TestConstantBuilder {
 
@@ -40,6 +28,50 @@ public class TestConstantBuilder {
     private static final Logger log = LoggerFactory.getLogger(TestConstantBuilder.class.getSimpleName());
 
     private static final int REGISTER = 0;
+
+    private static MethodBackedGraph getMockedGraph(int address, HeapItem value) {
+        MethodBackedGraph mbgraph = mock(MethodBackedGraph.class);
+        BuilderInstruction instruction = mock(BuilderInstruction.class,
+                withSettings().extraInterfaces(OneRegisterInstruction.class));
+        when(((OneRegisterInstruction) instruction).getRegisterA()).thenReturn(REGISTER);
+        when(mbgraph.getRegisterConsensus(address, REGISTER)).thenReturn(value);
+        when(mbgraph.getInstruction(address)).thenReturn(instruction);
+
+        return mbgraph;
+    }
+
+    private static void testEquals(Instruction expectedInstr, Instruction actualInstr) {
+        assertEquals(expectedInstr.getOpcode(), actualInstr.getOpcode());
+
+        if (expectedInstr instanceof OneRegisterInstruction) {
+            OneRegisterInstruction expected = (OneRegisterInstruction) expectedInstr;
+            OneRegisterInstruction actual = (OneRegisterInstruction) actualInstr;
+
+            assertEquals(expected.getRegisterA(), actual.getRegisterA());
+        }
+
+        if (expectedInstr instanceof NarrowLiteralInstruction) {
+            NarrowLiteralInstruction expected = (NarrowLiteralInstruction) expectedInstr;
+            NarrowLiteralInstruction actual = (NarrowLiteralInstruction) actualInstr;
+
+            assertEquals(expected.getNarrowLiteral(), actual.getNarrowLiteral());
+        }
+
+        if (expectedInstr instanceof WideLiteralInstruction) {
+            WideLiteralInstruction expected = (WideLiteralInstruction) expectedInstr;
+            WideLiteralInstruction actual = (WideLiteralInstruction) actualInstr;
+
+            assertEquals(expected.getWideLiteral(), actual.getWideLiteral());
+        }
+
+        if (expectedInstr instanceof ReferenceInstruction) {
+            ReferenceInstruction expected = (ReferenceInstruction) expectedInstr;
+            ReferenceInstruction actual = (ReferenceInstruction) actualInstr;
+
+            assertEquals(expected.getReferenceType(), actual.getReferenceType());
+            assertEquals(expected.getReference(), actual.getReference());
+        }
+    }
 
     public static class TestBuildBoolean {
         @Test
@@ -328,50 +360,6 @@ public class TestConstantBuilder {
             testEquals(expected, actual);
         }
 
-    }
-
-    private static MethodBackedGraph getMockedGraph(int address, HeapItem value) {
-        MethodBackedGraph mbgraph = mock(MethodBackedGraph.class);
-        BuilderInstruction instruction = mock(BuilderInstruction.class,
-                        withSettings().extraInterfaces(OneRegisterInstruction.class));
-        when(((OneRegisterInstruction) instruction).getRegisterA()).thenReturn(REGISTER);
-        when(mbgraph.getRegisterConsensus(address, REGISTER)).thenReturn(value);
-        when(mbgraph.getInstruction(address)).thenReturn(instruction);
-
-        return mbgraph;
-    }
-
-    private static void testEquals(Instruction expectedInstr, Instruction actualInstr) {
-        assertEquals(expectedInstr.getOpcode(), actualInstr.getOpcode());
-
-        if (expectedInstr instanceof OneRegisterInstruction) {
-            OneRegisterInstruction expected = (OneRegisterInstruction) expectedInstr;
-            OneRegisterInstruction actual = (OneRegisterInstruction) actualInstr;
-
-            assertEquals(expected.getRegisterA(), actual.getRegisterA());
-        }
-
-        if (expectedInstr instanceof NarrowLiteralInstruction) {
-            NarrowLiteralInstruction expected = (NarrowLiteralInstruction) expectedInstr;
-            NarrowLiteralInstruction actual = (NarrowLiteralInstruction) actualInstr;
-
-            assertEquals(expected.getNarrowLiteral(), actual.getNarrowLiteral());
-        }
-
-        if (expectedInstr instanceof WideLiteralInstruction) {
-            WideLiteralInstruction expected = (WideLiteralInstruction) expectedInstr;
-            WideLiteralInstruction actual = (WideLiteralInstruction) actualInstr;
-
-            assertEquals(expected.getWideLiteral(), actual.getWideLiteral());
-        }
-
-        if (expectedInstr instanceof ReferenceInstruction) {
-            ReferenceInstruction expected = (ReferenceInstruction) expectedInstr;
-            ReferenceInstruction actual = (ReferenceInstruction) actualInstr;
-
-            assertEquals(expected.getReferenceType(), actual.getReferenceType());
-            assertEquals(expected.getReference(), actual.getReference());
-        }
     }
 
 }

@@ -1,18 +1,18 @@
 package org.cf.smalivm.opcode;
 
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 import gnu.trove.list.TIntList;
 import gnu.trove.map.TIntObjectMap;
-
-import java.util.Arrays;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.context.ExecutionGraph;
 import org.cf.smalivm.context.HeapItem;
 import org.cf.smalivm.context.MethodState;
 import org.cf.smalivm.type.UnknownValue;
 import org.junit.Test;
+
+import java.util.Arrays;
+
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 public class TestMoveOp {
 
@@ -33,7 +33,7 @@ public class TestMoveOp {
         ExecutionGraph graph = VMTester.execute(CLASS_NAME, "TestMoveRegisterObject()V", initial);
         TIntList addresses = graph.getConnectedTerminatingAddresses();
         assertTrue("Should terminate when expected: " + addresses + " == {1}",
-                        Arrays.equals(addresses.toArray(), new int[] { 1 }));
+                Arrays.equals(addresses.toArray(), new int[]{1}));
 
         HeapItem register0 = graph.getRegisterConsensus(1, 0);
         HeapItem register1 = graph.getRegisterConsensus(1, 1);

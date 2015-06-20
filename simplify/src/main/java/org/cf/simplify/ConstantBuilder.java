@@ -1,35 +1,23 @@
 package org.cf.simplify;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.cf.smalivm.context.HeapItem;
-import org.cf.smalivm.opcode.AGetOp;
-import org.cf.smalivm.opcode.BinaryMathOp;
-import org.cf.smalivm.opcode.MoveOp;
-import org.cf.smalivm.opcode.Op;
-import org.cf.smalivm.opcode.ReturnOp;
-import org.cf.smalivm.opcode.SGetOp;
-import org.cf.smalivm.opcode.UnaryMathOp;
+import org.cf.smalivm.opcode.*;
 import org.cf.smalivm.type.LocalClass;
 import org.cf.util.SmaliClassUtils;
 import org.cf.util.Utils;
 import org.jf.dexlib2.Opcode;
 import org.jf.dexlib2.builder.BuilderInstruction;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction11n;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction21c;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction21ih;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction21lh;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction21s;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction31i;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction51l;
+import org.jf.dexlib2.builder.instruction.*;
 import org.jf.dexlib2.iface.instruction.OneRegisterInstruction;
 import org.jf.dexlib2.writer.builder.BuilderStringReference;
 import org.jf.dexlib2.writer.builder.BuilderTypeReference;
 import org.jf.dexlib2.writer.builder.DexBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ConstantBuilder implements Dependancy {
 
@@ -40,18 +28,10 @@ public class ConstantBuilder implements Dependancy {
     private static final String LAST_48_BITS_ZERO = "000000000000000000000000000000000000000000000000";
 
     private static final Set<Class<?>> ConstantizableOps = new HashSet<Class<?>>(Arrays.asList(BinaryMathOp.class,
-                    UnaryMathOp.class, MoveOp.class, ReturnOp.class, SGetOp.class, AGetOp.class));
+            UnaryMathOp.class, MoveOp.class, ReturnOp.class, SGetOp.class, AGetOp.class));
 
-    private static final Set<String> ConstantizableTypes = new HashSet<String>(Arrays.asList("I", "Z", "B", "S", "C",
-                    "J", "F", "D", "Ljava/lang/String;", "Ljava/lang/Class;"));
-
-    public boolean canConstantizeOp(Op op) {
-        return ConstantizableOps.contains(op.getClass());
-    }
-
-    public boolean canConstantizeType(String type) {
-        return ConstantizableTypes.contains(type);
-    }
+    private static final Set<String> ConstantizableTypes = new HashSet<>(Arrays.asList("I", "Z", "B", "S", "C",
+            "J", "F", "D", "Ljava/lang/String;", "Ljava/lang/Class;"));
 
     public static BuilderInstruction buildConstant(boolean value, int register) {
         int literal = value ? 1 : 0;
@@ -130,61 +110,73 @@ public class ConstantBuilder implements Dependancy {
 
     public static BuilderInstruction buildConstant(Object value, String type, int register, DexBuilder dexBuilder) {
         BuilderInstruction result = null;
-        if (type.equals("I")) {
-            if (value instanceof Integer) {
-                result = buildConstant(((Integer) value), register);
-            } else {
-                result = buildConstant(Utils.getIntegerValue(value), register);
-            }
-        } else if (type.equals("B")) {
-            if (value instanceof Byte) {
-                result = buildConstant(((Byte) value), register);
-            } else {
-                result = buildConstant(Utils.getIntegerValue(value), register);
-            }
-        } else if (type.equals("S")) {
-            if (value instanceof Short) {
-                result = buildConstant(((Short) value), register);
-            } else {
-                result = buildConstant(Utils.getIntegerValue(value), register);
-            }
-        } else if (type.equals("C")) {
-            if (value instanceof Character) {
-                result = buildConstant(((Character) value), register);
-            } else {
-                result = buildConstant(Utils.getIntegerValue(value), register);
-            }
-        } else if (type.equals("Z")) {
-            if (value instanceof Boolean) {
-                result = buildConstant(((Boolean) value), register);
-            } else {
-                result = buildConstant(Utils.getIntegerValue(value), register);
-            }
-        } else if (type.equals("J")) {
-            result = buildConstant(Utils.getLongValue(value), register);
-        } else if (type.equals("F")) {
-            result = buildConstant(Utils.getFloatValue(value), register);
-        } else if (type.equals("D")) {
-            // const op has no notion of actual type, just wide/narrow and bits
-            // must coax correct value when needed
-            result = buildConstant(Utils.getDoubleValue(value), register);
-        } else if (type.equals("Ljava/lang/String;")) {
-            BuilderStringReference stringRef = dexBuilder.internStringReference(value.toString());
-            result = new BuilderInstruction21c(Opcode.CONST_STRING, register, stringRef);
-        } else if (type.equals("Ljava/lang/Class;")) {
-            String className;
-            if (value instanceof LocalClass) {
-                className = ((LocalClass) value).getName();
-            } else {
-                Class<?> klazz = (Class<?>) value;
-                className = SmaliClassUtils.javaClassToSmali(klazz);
-            }
-            BuilderTypeReference typeRef = dexBuilder.internTypeReference(className);
-            result = new BuilderInstruction21c(Opcode.CONST_CLASS, register, typeRef);
-        } else {
-            if (log.isWarnEnabled()) {
-                log.warn("Unrecognized constant type: " + type + " for value: " + value + ". This will cause failures.");
-            }
+        switch (type) {
+            case "I":
+                if (value instanceof Integer) {
+                    result = buildConstant(((Integer) value), register);
+                } else {
+                    result = buildConstant(Utils.getIntegerValue(value), register);
+                }
+                break;
+            case "B":
+                if (value instanceof Byte) {
+                    result = buildConstant(((Byte) value), register);
+                } else {
+                    result = buildConstant(Utils.getIntegerValue(value), register);
+                }
+                break;
+            case "S":
+                if (value instanceof Short) {
+                    result = buildConstant(((Short) value), register);
+                } else {
+                    result = buildConstant(Utils.getIntegerValue(value), register);
+                }
+                break;
+            case "C":
+                if (value instanceof Character) {
+                    result = buildConstant(((Character) value), register);
+                } else {
+                    result = buildConstant(Utils.getIntegerValue(value), register);
+                }
+                break;
+            case "Z":
+                if (value instanceof Boolean) {
+                    result = buildConstant(((Boolean) value), register);
+                } else {
+                    result = buildConstant(Utils.getIntegerValue(value), register);
+                }
+                break;
+            case "J":
+                result = buildConstant(Utils.getLongValue(value), register);
+                break;
+            case "F":
+                result = buildConstant(Utils.getFloatValue(value), register);
+                break;
+            case "D":
+                // const op has no notion of actual type, just wide/narrow and bits
+                // must coax correct value when needed
+                result = buildConstant(Utils.getDoubleValue(value), register);
+                break;
+            case "Ljava/lang/String;":
+                BuilderStringReference stringRef = dexBuilder.internStringReference(value.toString());
+                result = new BuilderInstruction21c(Opcode.CONST_STRING, register, stringRef);
+                break;
+            case "Ljava/lang/Class;":
+                String className;
+                if (value instanceof LocalClass) {
+                    className = ((LocalClass) value).getName();
+                } else {
+                    Class<?> klazz = (Class<?>) value;
+                    className = SmaliClassUtils.javaClassToSmali(klazz);
+                }
+                BuilderTypeReference typeRef = dexBuilder.internTypeReference(className);
+                result = new BuilderInstruction21c(Opcode.CONST_CLASS, register, typeRef);
+                break;
+            default:
+                if (log.isWarnEnabled()) {
+                    log.warn("Unrecognized constant type: " + type + " for value: " + value + ". This will cause failures.");
+                }
+                break;
         }
 
         return result;
@@ -195,9 +187,16 @@ public class ConstantBuilder implements Dependancy {
         OneRegisterInstruction instruction = (OneRegisterInstruction) mbgraph.getInstruction(address);
         int register = instruction.getRegisterA();
         HeapItem item = mbgraph.getRegisterConsensus(address, register);
-        BuilderInstruction result = buildConstant(item.getValue(), item.getUnboxedValueType(), register, dexBuilder);
 
-        return result;
+        return buildConstant(item.getValue(), item.getUnboxedValueType(), register, dexBuilder);
+    }
+
+    public boolean canConstantizeOp(Op op) {
+        return ConstantizableOps.contains(op.getClass());
+    }
+
+    public boolean canConstantizeType(String type) {
+        return ConstantizableTypes.contains(type);
     }
 
 }

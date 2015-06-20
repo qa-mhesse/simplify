@@ -1,13 +1,12 @@
 package org.cf.smalivm.opcode;
 
 import gnu.trove.map.TIntObjectMap;
-
-import java.util.Map;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.context.HeapItem;
 import org.cf.smalivm.type.UnknownValue;
 import org.junit.Test;
+
+import java.util.Map;
 
 public class TestSGetOp {
 
@@ -16,7 +15,7 @@ public class TestSGetOp {
     @Test
     public void testStaticGetBoolean() {
         Map<String, Map<String, HeapItem>> classNameToFieldValue = VMTester.buildClassNameToFieldItem(CLASS_NAME,
-                        "myBoolean:Z", true);
+                "myBoolean:Z", true);
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, true, "Z");
 
         VMTester.testMethodState(CLASS_NAME, "StaticGetBoolean()V", expected, classNameToFieldValue);
@@ -25,7 +24,7 @@ public class TestSGetOp {
     @Test
     public void testStaticGetByte() {
         Map<String, Map<String, HeapItem>> classNameToFieldValue = VMTester.buildClassNameToFieldItem(CLASS_NAME,
-                        "myByte:B", (byte) 0xf);
+                "myByte:B", (byte) 0xf);
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, (byte) 0xf, "B");
 
         VMTester.testMethodState(CLASS_NAME, "StaticGetByte()V", expected, classNameToFieldValue);
@@ -34,7 +33,7 @@ public class TestSGetOp {
     @Test
     public void testStaticGetChar() {
         Map<String, Map<String, HeapItem>> classNameToFieldValue = VMTester.buildClassNameToFieldItem(CLASS_NAME,
-                        "myChar:C", 'x');
+                "myChar:C", 'x');
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, 'x', "C");
 
         VMTester.testMethodState(CLASS_NAME, "StaticGetChar()V", expected, classNameToFieldValue);
@@ -43,7 +42,7 @@ public class TestSGetOp {
     @Test
     public void testStaticGetInt() {
         Map<String, Map<String, HeapItem>> classNameToFieldValue = VMTester.buildClassNameToFieldItem(CLASS_NAME,
-                        "myInt:I", 0x42);
+                "myInt:I", 0x42);
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, 0x42, "I");
 
         VMTester.testMethodState(CLASS_NAME, "StaticGetInt()V", expected, classNameToFieldValue);
@@ -52,7 +51,7 @@ public class TestSGetOp {
     @Test
     public void testStaticGetObject() {
         Map<String, Map<String, HeapItem>> classNameToFieldValue = VMTester.buildClassNameToFieldItem(CLASS_NAME,
-                        "myString:Ljava/lang/String;", "They tried and died.");
+                "myString:Ljava/lang/String;", "They tried and died.");
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, "They tried and died.", "Ljava/lang/String;");
 
         VMTester.testMethodState(CLASS_NAME, "StaticGetObject()V", expected, classNameToFieldValue);
@@ -61,7 +60,7 @@ public class TestSGetOp {
     @Test
     public void testStaticGetShort() {
         Map<String, Map<String, HeapItem>> classNameToFieldValue = VMTester.buildClassNameToFieldItem(CLASS_NAME,
-                        "myShort:S", (short) 0x100);
+                "myShort:S", (short) 0x100);
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, (short) 0x100, "S");
 
         VMTester.testMethodState(CLASS_NAME, "StaticGetShort()V", expected, classNameToFieldValue);
@@ -84,7 +83,7 @@ public class TestSGetOp {
     @Test
     public void testStaticGetWide() {
         Map<String, Map<String, HeapItem>> classNameToFieldValue = VMTester.buildClassNameToFieldItem(CLASS_NAME,
-                        "myLong:J", 0xFFFFFFFFFL);
+                "myLong:J", 0xFFFFFFFFFL);
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, 0xFFFFFFFFFL, "J");
 
         VMTester.testMethodState(CLASS_NAME, "StaticGetWide()V", expected, classNameToFieldValue);

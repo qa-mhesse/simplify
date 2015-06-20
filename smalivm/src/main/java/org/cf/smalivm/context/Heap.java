@@ -1,14 +1,9 @@
 package org.cf.smalivm.context;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 class Heap {
 
@@ -19,36 +14,35 @@ class Heap {
     private Heap parent;
 
     Heap() {
-        keyToHeapItem = new HashMap<String, HeapItem>();
+        keyToHeapItem = new HashMap<>();
     }
 
     Heap(Heap other) {
-        keyToHeapItem = new HashMap<String, HeapItem>(other.keyToHeapItem);
+        keyToHeapItem = new HashMap<>(other.keyToHeapItem);
     }
 
     private static Set<String> getReassignedKeysBetweenChildAndAncestor(Heap child, Heap ancestor) {
         Heap current = child;
-        List<String> reassigned = new LinkedList<String>();
+        List<String> reassigned = new LinkedList<>();
         while (current != ancestor) {
             reassigned.addAll(current.keySet());
             current = current.getParent();
         }
-        Set<String> result = new HashSet<String>(reassigned);
 
-        return result;
+        return new HashSet<>(reassigned);
     }
 
     private Set<String> keySet() {
         // It's not that I don't trust you to mutate the keys, but I don't trust you.
-        return new HashSet<String>(keyToHeapItem.keySet());
-    }
-
-    void setParent(Heap parent) {
-        this.parent = parent;
+        return new HashSet<>(keyToHeapItem.keySet());
     }
 
     private Heap getParent() {
         return parent;
+    }
+
+    void setParent(Heap parent) {
+        this.parent = parent;
     }
 
     HeapItem get(String heapId, int register) {
@@ -111,10 +105,7 @@ class Heap {
     }
 
     private String buildKey(String heapId, int register) {
-        StringBuilder sb = new StringBuilder(heapId);
-        sb.append(':').append(register);
-
-        return sb.toString();
+        return heapId + ':' + register;
     }
 
     boolean hasRegister(String heapId, int register) {

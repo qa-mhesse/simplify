@@ -2,7 +2,6 @@ package org.cf.smalivm.context;
 
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

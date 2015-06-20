@@ -1,7 +1,5 @@
 package org.cf.smalivm.opcode;
 
-import java.lang.reflect.Array;
-
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.context.ExecutionNode;
 import org.cf.smalivm.context.HeapItem;
@@ -12,21 +10,11 @@ import org.jf.dexlib2.iface.instruction.formats.Instruction12x;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
+
 public class ArrayLengthOp extends MethodStateOp {
 
     private static final Logger log = LoggerFactory.getLogger(ArrayLengthOp.class.getSimpleName());
-
-    static ArrayLengthOp create(Instruction instruction, int address) {
-        String opName = instruction.getOpcode().name;
-        int childAddress = address + instruction.getCodeUnits();
-
-        Instruction12x instr = (Instruction12x) instruction;
-        int destRegister = instr.getRegisterA();
-        int arrayRegister = instr.getRegisterB();
-
-        return new ArrayLengthOp(address, opName, childAddress, destRegister, arrayRegister);
-    }
-
     private final int arrayRegister;
     private final int destRegister;
 
@@ -37,6 +25,17 @@ public class ArrayLengthOp extends MethodStateOp {
         this.arrayRegister = arrayRegister;
 
         addException(new VirtualException(NullPointerException.class, "Attempt to get length of null array"));
+    }
+
+    static ArrayLengthOp create(Instruction instruction, int address) {
+        String opName = instruction.getOpcode().name;
+        int childAddress = address + instruction.getCodeUnits();
+
+        Instruction12x instr = (Instruction12x) instruction;
+        int destRegister = instr.getRegisterA();
+        int arrayRegister = instr.getRegisterB();
+
+        return new ArrayLengthOp(address, opName, childAddress, destRegister, arrayRegister);
     }
 
     @Override

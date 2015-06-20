@@ -1,7 +1,6 @@
 package org.cf.smalivm.opcode;
 
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.context.HeapItem;
 import org.junit.Test;
@@ -15,8 +14,8 @@ public class TestIfOp {
     private static final int ADDRESS_IF = 0;
     private static final int ADDRESS_NOP = 2;
     private static final int ADDRESS_RETURN = 3;
-    private static final int[] IF_TRUE_VISITATIONS = new int[] { ADDRESS_IF, ADDRESS_RETURN };
-    private static final int[] IF_FALSE_VISITATIONS = new int[] { ADDRESS_IF, ADDRESS_NOP, ADDRESS_RETURN };
+    private static final int[] IF_TRUE_VISITATIONS = new int[]{ADDRESS_IF, ADDRESS_RETURN};
+    private static final int[] IF_FALSE_VISITATIONS = new int[]{ADDRESS_IF, ADDRESS_NOP, ADDRESS_RETURN};
 
     public static class TestCompareObjectReferences {
         @Test
@@ -26,7 +25,7 @@ public class TestIfOp {
             // Need to get crafty or javac will be smart enough to use same literal for both objects
             String obj2 = new StringBuilder(obj1).toString();
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, obj1, "Ljava/lang/String;", 1, obj2,
-                            "Ljava/lang/String;");
+                    "Ljava/lang/String;");
             VMTester.testVisitation(CLASS_NAME, methodSignature, initial, IF_TRUE_VISITATIONS);
         }
 
@@ -34,7 +33,7 @@ public class TestIfOp {
         public void testIfNotEqualWithStringAndArrayReferenceIsTrue() {
             String methodSignature = "IfNotEqual()V";
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, "object string", "Ljava/lang/String;", 1,
-                            new int[0], "[I");
+                    new int[0], "[I");
             VMTester.testVisitation(CLASS_NAME, methodSignature, initial, IF_TRUE_VISITATIONS);
         }
 
@@ -43,7 +42,7 @@ public class TestIfOp {
             String methodSignature = "IfEqual()V";
             String obj = "object string";
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, obj, "Ljava/lang/String;", 1, obj,
-                            "Ljava/lang/String;");
+                    "Ljava/lang/String;");
             VMTester.testVisitation(CLASS_NAME, methodSignature, initial, IF_TRUE_VISITATIONS);
         }
 
@@ -78,7 +77,7 @@ public class TestIfOp {
         @Test
         public void testIfPrimitiveArrayNotEqualZero() {
             String methodSignature = "IfNotEqualZero()V";
-            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new byte[] { 0x1 }, "[B");
+            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new byte[]{0x1}, "[B");
             VMTester.testVisitation(CLASS_NAME, methodSignature, initial, IF_TRUE_VISITATIONS);
         }
 

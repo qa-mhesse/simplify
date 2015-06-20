@@ -1,7 +1,6 @@
 package org.cf.smalivm.opcode;
 
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.context.HeapItem;
 import org.cf.smalivm.type.LocalInstance;
@@ -24,7 +23,7 @@ public class TestNewInstanceOp {
     public void testNonLocalClass() {
         TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, 1, "I");
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, new UninitializedInstance(
-                        "Ljava/lang/Integer;"), "Ljava/lang/Integer;");
+                "Ljava/lang/Integer;"), "Ljava/lang/Integer;");
 
         VMTester.testMethodState(CLASS_NAME, "TestNonLocalClass()V", initial, expected);
     }

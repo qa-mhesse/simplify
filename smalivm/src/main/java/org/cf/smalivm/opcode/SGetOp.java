@@ -16,6 +16,18 @@ public class SGetOp extends ExecutionContextOp {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(SGetOp.class.getSimpleName());
+    private final int destRegister;
+    private final String fieldDescriptor;
+    private final VirtualMachine vm;
+
+    public SGetOp(int address, String opName, int childAddress, int destRegister, String fieldDescriptor,
+                  VirtualMachine vm) {
+        super(address, opName, childAddress);
+
+        this.destRegister = destRegister;
+        this.fieldDescriptor = fieldDescriptor;
+        this.vm = vm;
+    }
 
     static SGetOp create(Instruction instruction, int address, VirtualMachine vm) {
         String opName = instruction.getOpcode().name;
@@ -27,19 +39,6 @@ public class SGetOp extends ExecutionContextOp {
         String fieldDescriptor = ReferenceUtil.getFieldDescriptor(reference);
 
         return new SGetOp(address, opName, childAddress, destRegister, fieldDescriptor, vm);
-    }
-
-    private final int destRegister;
-    private final String fieldDescriptor;
-    private final VirtualMachine vm;
-
-    public SGetOp(int address, String opName, int childAddress, int destRegister, String fieldDescriptor,
-                    VirtualMachine vm) {
-        super(address, opName, childAddress);
-
-        this.destRegister = destRegister;
-        this.fieldDescriptor = fieldDescriptor;
-        this.vm = vm;
     }
 
     @Override

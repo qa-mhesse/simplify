@@ -1,20 +1,5 @@
 package org.cf.smalivm.emulate;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
-
-import java.lang.reflect.Field;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import org.cf.smalivm.ClassManager;
 import org.cf.smalivm.StaticFieldAccessor;
 import org.cf.smalivm.VirtualException;
@@ -32,20 +17,21 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-public class Test_java_lang_reflect_Field_get {
+import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
-    private VirtualMachine vm;
-    private ExecutionContextMethod method;
-    private ClassManager classManager;
-    private ExecutionContext ectx;
-    private ExecutionContext callerContext;
-    private MethodState mState;
-    private HeapItem fieldItem;
-    private HeapItem instanceItem;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
+
+public class Test_java_lang_reflect_Field_get {
 
     private static final int FIELD_REGISTER = 0;
     private static final int INSTANCE_REGISTER = 1;
-
     private static final String LOCAL_CLASS = "Llocal/Klazz;";
     private static final String LOCAL_CLASS_JAVA = "local.Klazz";
     private static final String NO_ACCESS_LOCAL_CLASS = "Ljava/lang/Whatever;";
@@ -54,26 +40,30 @@ public class Test_java_lang_reflect_Field_get {
     private static final String LOCAL_PUBLIC_STATIC_FIELD_TYPE = "I";
     private static final int LOCAL_PUBLIC_STATIC_FIELD_VALUE = 1;
     private static final String LOCAL_PUBLIC_STATIC_FIELD = LOCAL_CLASS + "->" + LOCAL_PUBLIC_STATIC_FIELD_NAME + ":" + LOCAL_PUBLIC_STATIC_FIELD_TYPE;
-
     private static final String LOCAL_PRIVATE_STATIC_FIELD_NAME = "privateStaticField";
     private static final String LOCAL_PRIVATE_STATIC_FIELD_TYPE = "I";
     private static final int LOCAL_PRIVATE_STATIC_FIELD_VALUE = 2;
     private static final String LOCAL_PRIVATE_STATIC_FIELD = LOCAL_CLASS + "->" + LOCAL_PRIVATE_STATIC_FIELD_NAME + ":" + LOCAL_PRIVATE_STATIC_FIELD_TYPE;
-
     private static final String LOCAL_PUBLIC_INSTANCE_FIELD_NAME = "publicInstanceField";
     private static final String LOCAL_PUBLIC_INSTANCE_FIELD_TYPE = "I";
     private static final int LOCAL_PUBLIC_INSTANCE_FIELD_VALUE = 3;
     private static final String LOCAL_PUBLIC_INSTANCE_FIELD = LOCAL_CLASS + "->" + LOCAL_PUBLIC_INSTANCE_FIELD_NAME + ":" + LOCAL_PUBLIC_INSTANCE_FIELD_TYPE;
-
     private static final String LOCAL_PRIVATE_INSTANCE_FIELD_NAME = "privateInstanceField";
     private static final String LOCAL_PRIVATE_INSTANCE_FIELD_TYPE = "I";
     private static final int LOCAL_PRIVATE_INSTANCE_FIELD_VALUE = 4;
     private static final String LOCAL_PRIVATE_INSTANCE_FIELD = LOCAL_CLASS + "->" + LOCAL_PRIVATE_INSTANCE_FIELD_NAME + ":" + LOCAL_PRIVATE_INSTANCE_FIELD_TYPE;
-
     private static final String MOCKED_CLASS = "Lmy/mocked/Class;";
     private static final String MOCKED_CLASS_JAVA = "my.mocked.Class";
     private static final String MOCKED_METHOD = "mockedMethod()V";
     private static final String MOCKED_METHOD_DESCRIPTOR = MOCKED_CLASS + "->" + MOCKED_METHOD;
+    private VirtualMachine vm;
+    private ExecutionContextMethod method;
+    private ClassManager classManager;
+    private ExecutionContext ectx;
+    private ExecutionContext callerContext;
+    private MethodState mState;
+    private HeapItem fieldItem;
+    private HeapItem instanceItem;
 
     @Before
     public void setUp() {
@@ -104,31 +94,31 @@ public class Test_java_lang_reflect_Field_get {
 
         BuilderField publicStaticField = mock(BuilderField.class, withSettings().extraInterfaces(FieldReference.class));
         when(staticFieldAccessor.getField(ectx, LOCAL_PUBLIC_STATIC_FIELD)).thenReturn(
-                        new HeapItem(LOCAL_PUBLIC_STATIC_FIELD_VALUE, "I"));
+                new HeapItem(LOCAL_PUBLIC_STATIC_FIELD_VALUE, "I"));
         when(publicStaticField.getDefiningClass()).thenReturn(LOCAL_CLASS);
         when(publicStaticField.getName()).thenReturn(LOCAL_PUBLIC_STATIC_FIELD_NAME);
         when(publicStaticField.getType()).thenReturn(LOCAL_PUBLIC_STATIC_FIELD_TYPE);
         when(publicStaticField.getAccessFlags()).thenReturn(
-                        AccessFlags.PUBLIC.getValue() | AccessFlags.STATIC.getValue());
+                AccessFlags.PUBLIC.getValue() | AccessFlags.STATIC.getValue());
 
         BuilderField privateStaticField = mock(BuilderField.class, withSettings().extraInterfaces(FieldReference.class));
         when(staticFieldAccessor.getField(ectx, LOCAL_PRIVATE_STATIC_FIELD)).thenReturn(
-                        new HeapItem(LOCAL_PRIVATE_STATIC_FIELD_VALUE, "I"));
+                new HeapItem(LOCAL_PRIVATE_STATIC_FIELD_VALUE, "I"));
         when(privateStaticField.getDefiningClass()).thenReturn(LOCAL_CLASS);
         when(privateStaticField.getName()).thenReturn(LOCAL_PRIVATE_STATIC_FIELD_NAME);
         when(privateStaticField.getType()).thenReturn(LOCAL_PRIVATE_STATIC_FIELD_TYPE);
         when(privateStaticField.getAccessFlags()).thenReturn(
-                        AccessFlags.PRIVATE.getValue() | AccessFlags.STATIC.getValue());
+                AccessFlags.PRIVATE.getValue() | AccessFlags.STATIC.getValue());
 
         BuilderField publicInstanceField = mock(BuilderField.class, withSettings()
-                        .extraInterfaces(FieldReference.class));
+                .extraInterfaces(FieldReference.class));
         when(publicInstanceField.getDefiningClass()).thenReturn(LOCAL_CLASS);
         when(publicInstanceField.getName()).thenReturn(LOCAL_PUBLIC_INSTANCE_FIELD_NAME);
         when(publicInstanceField.getType()).thenReturn(LOCAL_PUBLIC_INSTANCE_FIELD_TYPE);
         when(publicInstanceField.getAccessFlags()).thenReturn(AccessFlags.PUBLIC.getValue());
 
         BuilderField privateInstanceField = mock(BuilderField.class,
-                        withSettings().extraInterfaces(FieldReference.class));
+                withSettings().extraInterfaces(FieldReference.class));
         when(privateInstanceField.getDefiningClass()).thenReturn(LOCAL_CLASS);
         when(privateInstanceField.getName()).thenReturn(LOCAL_PRIVATE_INSTANCE_FIELD_NAME);
         when(privateInstanceField.getType()).thenReturn(LOCAL_PRIVATE_INSTANCE_FIELD_TYPE);
@@ -262,7 +252,7 @@ public class Test_java_lang_reflect_Field_get {
     }
 
     private void testLocalExceptionalCase(LocalField field, Object instance, Class<? extends Exception> exceptionClass,
-                    String expectedMessage) throws Exception {
+                                          String expectedMessage) throws Exception {
         testExceptionalCase(field, instance, exceptionClass, expectedMessage);
 
         String className = field.getName().split("->")[0];
@@ -288,7 +278,7 @@ public class Test_java_lang_reflect_Field_get {
     }
 
     private void testExceptionalCase(Object field, Object instance, Class<? extends Exception> exceptionClass,
-                    String message) throws Exception {
+                                     String message) throws Exception {
         when(fieldItem.getValue()).thenReturn(field);
         when(instanceItem.getValue()).thenReturn(instance);
 

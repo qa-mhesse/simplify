@@ -1,7 +1,5 @@
 package org.cf.smalivm;
 
-import java.lang.reflect.Field;
-
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.cf.smalivm.context.ClassState;
 import org.cf.smalivm.context.ExecutionContext;
@@ -9,6 +7,8 @@ import org.cf.smalivm.context.HeapItem;
 import org.cf.util.SmaliClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Field;
 
 public class StaticFieldAccessor {
 

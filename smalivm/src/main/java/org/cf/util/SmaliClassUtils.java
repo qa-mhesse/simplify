@@ -1,18 +1,19 @@
 package org.cf.util;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 
 public class SmaliClassUtils {
 
     private static BiMap<String, String> smaliPrimitiveToJavaWrapper;
     private static BiMap<String, String> smaliPrimitiveToJavaName;
     private static Map<String, Class<?>> javaPrimitiveToType;
+
     static {
         smaliPrimitiveToJavaWrapper = HashBiMap.create();
         smaliPrimitiveToJavaWrapper.put("I", Integer.class.getName());
@@ -36,7 +37,7 @@ public class SmaliClassUtils {
         smaliPrimitiveToJavaName.put("C", char.class.getName());
         smaliPrimitiveToJavaName.put("V", void.class.getName());
 
-        javaPrimitiveToType = new HashMap<String, Class<?>>(9);
+        javaPrimitiveToType = new HashMap<>(9);
         javaPrimitiveToType.put("int", Integer.TYPE);
         javaPrimitiveToType.put("long", Long.TYPE);
         javaPrimitiveToType.put("double", Double.TYPE);
@@ -71,7 +72,7 @@ public class SmaliClassUtils {
     }
 
     public static List<String> javaClassToSmali(Class<?>... classes) {
-        List<String> smaliNames = new LinkedList<String>();
+        List<String> smaliNames = new LinkedList<>();
         for (Class<?> klazz : classes) {
             smaliNames.add(javaClassToSmali(klazz));
         }
@@ -94,10 +95,7 @@ public class SmaliClassUtils {
             return className;
         }
 
-        StringBuilder sb = new StringBuilder("L");
-        sb.append(className.replaceAll("\\.", "/")).append(';');
-
-        return sb.toString();
+        return "L" + className.replaceAll("\\.", "/") + ';';
     }
 
     public static String smaliClassToJava(String className) {
@@ -133,10 +131,8 @@ public class SmaliClassUtils {
 
         int lastIndex = className.lastIndexOf('[');
         String dimens = className.substring(0, lastIndex + 1);
-        StringBuilder sb = new StringBuilder(dimens);
-        sb.append('L').append(javaWrapper).append(';');
 
-        return sb.toString();
+        return dimens + 'L' + javaWrapper + ';';
     }
 
     public static String getPackageName(String smaliType) {

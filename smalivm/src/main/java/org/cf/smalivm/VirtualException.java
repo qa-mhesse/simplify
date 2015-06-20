@@ -35,20 +35,20 @@ public class VirtualException {
         return exceptionClass;
     }
 
-    void setMessage(String message) {
-        this.message = message;
+    StackTraceElement[] getStackTrace() {
+        return stackTrace;
     }
 
     void setStackTrace(StackTraceElement[] stackTrace) {
         this.stackTrace = stackTrace;
     }
 
-    StackTraceElement[] getStackTrace() {
-        return stackTrace;
-    }
-
     String getMessage() {
         return message;
+    }
+
+    void setMessage(String message) {
+        this.message = message;
     }
 
     @Override
@@ -65,21 +65,17 @@ public class VirtualException {
         VirtualException rhs = (VirtualException) obj;
 
         return new EqualsBuilder().append(getExceptionClass(), rhs.getExceptionClass())
-                        .append(getStackTrace(), rhs.getStackTrace()).append(getMessage(), rhs.getMessage()).isEquals();
+                .append(getStackTrace(), rhs.getStackTrace()).append(getMessage(), rhs.getMessage()).isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder(327, 53).append(getExceptionClass()).append(getStackTrace()).append(getMessage())
-                        .hashCode();
+                .hashCode();
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getExceptionClass()).append(' ').append(getMessage());
-
-        return sb.toString();
+        return getExceptionClass() + ' ' + getMessage();
     }
-
 }

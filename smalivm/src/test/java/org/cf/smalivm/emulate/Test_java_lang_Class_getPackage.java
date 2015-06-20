@@ -1,7 +1,5 @@
 package org.cf.smalivm.emulate;
 
-import static org.junit.Assert.assertEquals;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.context.ExecutionContext;
@@ -13,16 +11,12 @@ import org.cf.smalivm.type.UnknownValue;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+
 public class Test_java_lang_Class_getPackage {
 
     private VirtualMachine vm;
     private MethodStateMethod emulatedMethod;
-
-    @Before
-    public void setUp() {
-        vm = VMTester.getTestVM();
-        emulatedMethod = new java_lang_Class_getPackage();
-    }
 
     private static MethodState getMethodState(VirtualMachine vm, Object register0, String type) {
         ExecutionContext ectx = new ExecutionContext(vm, "Ljava/lang/Class;->getPackage()Ljava/lang/Package;");
@@ -31,6 +25,12 @@ public class Test_java_lang_Class_getPackage {
         mState.assignRegister(0, register0, type);
 
         return mState;
+    }
+
+    @Before
+    public void setUp() {
+        vm = VMTester.getTestVM();
+        emulatedMethod = new java_lang_Class_getPackage();
     }
 
     @Test

@@ -2,9 +2,6 @@ package org.cf.smalivm.opcode;
 
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-
-import java.util.List;
-
 import org.cf.smalivm.context.ExecutionNode;
 import org.cf.smalivm.context.HeapItem;
 import org.cf.smalivm.context.MethodState;
@@ -15,16 +12,23 @@ import org.jf.dexlib2.iface.instruction.SwitchPayload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SwitchPayloadOp extends MethodStateOp {
+import java.util.List;
 
-    private static enum SwitchType {
-        PACKED, SPARSE
-    }
+public class SwitchPayloadOp extends MethodStateOp {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(SwitchPayloadOp.class.getSimpleName());
-
     private static final int SWITCH_OP_CODE_UNITS = 3;
+    private final List<? extends SwitchElement> switchElements;
+    private final SwitchType switchType;
+
+    private SwitchPayloadOp(int address, String opName, SwitchType switchType,
+                            List<? extends SwitchElement> switchElements) {
+        super(address, opName, determineChildren(switchElements));
+
+        this.switchType = switchType;
+        this.switchElements = switchElements;
+    }
 
     private static int[] determineChildren(List<? extends SwitchElement> switchElements) {
         TIntSet children = new TIntHashSet(switchElements.size() + 1);
@@ -50,17 +54,6 @@ public class SwitchPayloadOp extends MethodStateOp {
         List<? extends SwitchElement> switchElements = instr.getSwitchElements();
 
         return new SwitchPayloadOp(address, opName, switchType, switchElements);
-    }
-
-    private final List<? extends SwitchElement> switchElements;
-    private final SwitchType switchType;
-
-    private SwitchPayloadOp(int address, String opName, SwitchType switchType,
-                    List<? extends SwitchElement> switchElements) {
-        super(address, opName, determineChildren(switchElements));
-
-        this.switchType = switchType;
-        this.switchElements = switchElements;
     }
 
     @Override
@@ -115,6 +108,10 @@ public class SwitchPayloadOp extends MethodStateOp {
         }
 
         return result;
+    }
+
+    private static enum SwitchType {
+        PACKED, SPARSE
     }
 
 }

@@ -4,15 +4,6 @@ import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.opcode.Op;
@@ -25,15 +16,47 @@ import org.jf.dexlib2.writer.builder.BuilderMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ExecutionGraph implements Iterable<ExecutionNode> {
+import java.util.*;
 
-    private static final Logger log = LoggerFactory.getLogger(ExecutionGraph.class.getSimpleName());
+public class ExecutionGraph implements Iterable<ExecutionNode> {
 
     protected static final int TEMPLATE_NODE_INDEX = 0;
     protected static final int METHOD_ROOT_ADDRESS = 0;
+    private static final Logger log = LoggerFactory.getLogger(ExecutionGraph.class.getSimpleName());
+    protected final TIntObjectMap<List<ExecutionNode>> addressToNodePile;
+    private final String methodDescriptor;
+    private final TIntList terminatingAddresses;
+
+    public ExecutionGraph(ExecutionGraph other) {
+        methodDescriptor = other.methodDescriptor;
+        addressToNodePile = new TIntObjectHashMap<List<ExecutionNode>>();
+        for (int address : other.addressToNodePile.keys()) {
+            List<ExecutionNode> otherNodePile = other.addressToNodePile.get(address);
+            List<ExecutionNode> nodePile = new ArrayList<ExecutionNode>(otherNodePile.size());
+            for (ExecutionNode otherNode : otherNodePile) {
+                nodePile.add(new ExecutionNode(otherNode));
+            }
+            addressToNodePile.put(address, nodePile);
+        }
+        terminatingAddresses = other.terminatingAddresses;
+    }
+
+    public ExecutionGraph(ExecutionGraph other, boolean wrap) {
+        this.addressToNodePile = other.addressToNodePile;
+        this.methodDescriptor = other.methodDescriptor;
+        this.terminatingAddresses = other.terminatingAddresses;
+    }
+
+    public ExecutionGraph(VirtualMachine vm, BuilderMethod method) {
+        methodDescriptor = ReferenceUtil.getMethodDescriptor(method);
+        MutableMethodImplementation implementation = (MutableMethodImplementation) method.getImplementation();
+        List<BuilderInstruction> instructions = implementation.getInstructions();
+        addressToNodePile = buildAddressToNodePile(vm, instructions);
+        terminatingAddresses = buildTerminatingAddresses(instructions);
+    }
 
     private static TIntObjectMap<List<ExecutionNode>> buildAddressToNodePile(VirtualMachine vm,
-                    List<BuilderInstruction> instructions) {
+                                                                             List<BuilderInstruction> instructions) {
         OpFactory opFactory = new OpFactory(vm);
         TIntObjectMap<List<ExecutionNode>> result = new TIntObjectHashMap<List<ExecutionNode>>();
         for (BuilderInstruction instruction : instructions) {
@@ -67,38 +90,6 @@ public class ExecutionGraph implements Iterable<ExecutionNode> {
         }
 
         return result;
-    }
-
-    private final String methodDescriptor;
-    private final TIntList terminatingAddresses;
-    protected final TIntObjectMap<List<ExecutionNode>> addressToNodePile;
-
-    public ExecutionGraph(ExecutionGraph other) {
-        methodDescriptor = other.methodDescriptor;
-        addressToNodePile = new TIntObjectHashMap<List<ExecutionNode>>();
-        for (int address : other.addressToNodePile.keys()) {
-            List<ExecutionNode> otherNodePile = other.addressToNodePile.get(address);
-            List<ExecutionNode> nodePile = new ArrayList<ExecutionNode>(otherNodePile.size());
-            for (ExecutionNode otherNode : otherNodePile) {
-                nodePile.add(new ExecutionNode(otherNode));
-            }
-            addressToNodePile.put(address, nodePile);
-        }
-        terminatingAddresses = other.terminatingAddresses;
-    }
-
-    public ExecutionGraph(ExecutionGraph other, boolean wrap) {
-        this.addressToNodePile = other.addressToNodePile;
-        this.methodDescriptor = other.methodDescriptor;
-        this.terminatingAddresses = other.terminatingAddresses;
-    }
-
-    public ExecutionGraph(VirtualMachine vm, BuilderMethod method) {
-        methodDescriptor = ReferenceUtil.getMethodDescriptor(method);
-        MutableMethodImplementation implementation = (MutableMethodImplementation) method.getImplementation();
-        List<BuilderInstruction> instructions = implementation.getInstructions();
-        addressToNodePile = buildAddressToNodePile(vm, instructions);
-        terminatingAddresses = buildTerminatingAddresses(instructions);
     }
 
     public void addNode(ExecutionNode node) {
@@ -206,7 +197,7 @@ public class ExecutionGraph implements Iterable<ExecutionNode> {
     }
 
     public HeapItem getRegisterConsensus(int address, int register) {
-        TIntList addresses = new TIntArrayList(new int[] { address });
+        TIntList addresses = new TIntArrayList(new int[]{address});
 
         return getRegisterConsensus(addresses, register);
     }
@@ -232,13 +223,13 @@ public class ExecutionGraph implements Iterable<ExecutionNode> {
                     continue;
                 }
                 switch (level) {
-                case STRONG:
-                    return level;
-                case WEAK:
-                    result = level;
-                    break;
-                case NONE:
-                    break;
+                    case STRONG:
+                        return level;
+                    case WEAK:
+                        result = level;
+                        break;
+                    case NONE:
+                        break;
                 }
             }
         }
@@ -306,13 +297,13 @@ public class ExecutionGraph implements Iterable<ExecutionNode> {
         for (String className : allClasses) {
             SideEffect.Level level = getHighestClassSideEffectLevel(className);
             switch (level) {
-            case STRONG:
-                return level;
-            case WEAK:
-                result = level;
-                break;
-            case NONE:
-                break;
+                case STRONG:
+                    return level;
+                case WEAK:
+                    result = level;
+                    break;
+                case NONE:
+                    break;
             }
         }
 
@@ -325,13 +316,13 @@ public class ExecutionGraph implements Iterable<ExecutionNode> {
             Op op = node.getOp();
             SideEffect.Level level = op.sideEffectLevel();
             switch (level) {
-            case STRONG:
-                return level;
-            case WEAK:
-                result = level;
-                break;
-            case NONE:
-                break;
+                case STRONG:
+                    return level;
+                case WEAK:
+                    result = level;
+                    break;
+                case NONE:
+                    break;
             }
         }
 
@@ -343,7 +334,7 @@ public class ExecutionGraph implements Iterable<ExecutionNode> {
     }
 
     public HeapItem getTerminatingFieldConsensus(String fieldDescriptor) {
-        Map<String, HeapItem> items = getTerminatingFieldConsensus(new String[] { fieldDescriptor });
+        Map<String, HeapItem> items = getTerminatingFieldConsensus(new String[]{fieldDescriptor});
 
         return items.get(fieldDescriptor);
     }
@@ -360,7 +351,7 @@ public class ExecutionGraph implements Iterable<ExecutionNode> {
     }
 
     public HeapItem getTerminatingRegisterConsensus(int register) {
-        Map<Integer, HeapItem> items = getTerminatingRegisterConsensus(new int[] { register });
+        Map<Integer, HeapItem> items = getTerminatingRegisterConsensus(new int[]{register});
 
         return items.get(register);
     }

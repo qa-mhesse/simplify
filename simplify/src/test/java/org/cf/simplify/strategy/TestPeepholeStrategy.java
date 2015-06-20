@@ -1,8 +1,6 @@
 package org.cf.simplify.strategy;
 
-import static org.junit.Assert.assertEquals;
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.simplify.MethodBackedGraph;
 import org.cf.simplify.OptimizerTester;
 import org.cf.smalivm.VMTester;
@@ -20,6 +18,8 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.assertEquals;
 
 @RunWith(Enclosed.class)
 public class TestPeepholeStrategy {
@@ -87,7 +87,7 @@ public class TestPeepholeStrategy {
 
         private void testForExpectedInstruction(Object register1, String expectedConstant) {
             MethodBackedGraph mbgraph = getOptimizedGraph(METHOD_NAME, 0, new UninitializedInstance(
-                            "Ljava/lang/String;"), "Ljava/lang/String;", 1, register1, "[B");
+                    "Ljava/lang/String;"), "Ljava/lang/String;", 1, register1, "[B");
 
             BuilderInstruction21c instruction = (BuilderInstruction21c) mbgraph.getInstruction(ADDRESS);
             assertEquals(Opcode.CONST_STRING, instruction.getOpcode());
@@ -105,7 +105,7 @@ public class TestPeepholeStrategy {
         @Test
         public void testStringInitWithUnknownValueIsNotReplaced() {
             MethodBackedGraph mbgraph = getOptimizedGraph(METHOD_NAME, 0, new UninitializedInstance(
-                            "Ljava/lang/String;"), "Ljava/lang/String;", 1, new UnknownValue(), "[B");
+                    "Ljava/lang/String;"), "Ljava/lang/String;", 1, new UnknownValue(), "[B");
             Instruction35c instruction = (Instruction35c) mbgraph.getInstruction(ADDRESS);
             String methodDescriptor = ReferenceUtil.getMethodDescriptor((MethodReference) instruction.getReference());
 

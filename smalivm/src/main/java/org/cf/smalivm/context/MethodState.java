@@ -2,7 +2,6 @@ package org.cf.smalivm.context;
 
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-
 import org.cf.util.Utils;
 
 public class MethodState extends BaseState {
@@ -125,6 +124,11 @@ public class MethodState extends BaseState {
         return (int) peekRegister(ReturnAddress).getValue();
     }
 
+    public void setPseudoInstructionReturnAddress(int address) {
+        // Pseudo instructions like array-data-payload need return addresses.
+        pokeRegister(ReturnAddress, address, METHOD_HEAP);
+    }
+
     public HeapItem peekRegister(int register) {
         return super.peekRegister(register, METHOD_HEAP);
     }
@@ -140,18 +144,13 @@ public class MethodState extends BaseState {
         return peekRegister(ReturnRegister);
     }
 
-    public void setPseudoInstructionReturnAddress(int address) {
-        // Pseudo instructions like array-data-payload need return addresses.
-        pokeRegister(ReturnAddress, address, METHOD_HEAP);
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         if (getParameterCount() > 0) {
             sb.append("parameters: ").append(parameterCount).append("\n[");
             boolean printingAtLeastOneParameter = false;
-            for (int parameterRegister = getParameterStart(); parameterRegister < getRegisterCount();) {
+            for (int parameterRegister = getParameterStart(); parameterRegister < getRegisterCount(); ) {
                 sb.append('p').append(parameterRegister).append(": ");
                 if (super.hasRegister(parameterRegister, METHOD_HEAP)) {
                     printingAtLeastOneParameter = true;
@@ -182,7 +181,7 @@ public class MethodState extends BaseState {
                 }
                 hadAtLeastOneLocal = true;
                 sb.append('v').append(register).append(": ").append(registerToString(register, METHOD_HEAP))
-                                .append(",\n");
+                        .append(",\n");
             }
             if (hadAtLeastOneLocal) {
                 sb.setLength(sb.length() - 2);

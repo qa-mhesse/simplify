@@ -24,7 +24,7 @@ public class Main {
 
         // Hook println with our own implementation
         MethodEmulator.addMethod("Ljava/io/PrintStream;->println(Ljava/lang/String;)V",
-                        java_io_PrintStream_println.class);
+                java_io_PrintStream_println.class);
 
         // Execute particular method
         vm.execute("Lorg/cf/demosmali/Main;->main([Ljava/lang/String;)V");
@@ -34,7 +34,7 @@ public class Main {
     }
 
     private static void executeParameterLogic(int parameterValue) throws MaxAddressVisitsExceeded,
-                    MaxCallDepthExceeded, MaxMethodVisitsExceeded, UnhandledVirtualException {
+            MaxCallDepthExceeded, MaxMethodVisitsExceeded, UnhandledVirtualException {
         String methodDescriptor = "Lorg/cf/demosmali/Main;->parameterLogic(I)I";
 
         // Execute with ambiguous / unknown parameters.
@@ -59,7 +59,7 @@ public class Main {
     }
 
     private static void executePrintParameter(int parameterValue) throws MaxAddressVisitsExceeded,
-                    MaxCallDepthExceeded, MaxMethodVisitsExceeded, UnhandledVirtualException {
+            MaxCallDepthExceeded, MaxMethodVisitsExceeded, UnhandledVirtualException {
         String methodDescriptor = "Lorg/cf/demosmali/Main;->printParameter(I)V";
         ExecutionContext ectx = vm.spawnExecutionContext(methodDescriptor);
         MethodState mState = ectx.getMethodState();

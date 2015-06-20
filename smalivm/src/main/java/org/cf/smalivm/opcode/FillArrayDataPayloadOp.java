@@ -1,8 +1,5 @@
 package org.cf.smalivm.opcode;
 
-import java.lang.reflect.Array;
-import java.util.List;
-
 import org.apache.commons.lang3.ClassUtils;
 import org.cf.smalivm.context.ExecutionNode;
 import org.cf.smalivm.context.HeapItem;
@@ -12,10 +9,22 @@ import org.jf.dexlib2.iface.instruction.formats.ArrayPayload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
+import java.util.List;
+
 public class FillArrayDataPayloadOp extends MethodStateOp {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(FillArrayDataPayloadOp.class.getSimpleName());
+    private final List<Number> arrayElements;
+    private final int elementWidth;
+
+    private FillArrayDataPayloadOp(int address, String opName, int elementWidth, List<Number> arrayElements) {
+        super(address, opName, 0); // childAddress / returnAddress not known until runtime
+
+        this.elementWidth = elementWidth;
+        this.arrayElements = arrayElements;
+    }
 
     private static Object getProperValue(Number number, Class<?> expectedClass) {
         Class<?> klazz = ClassUtils.wrapperToPrimitive(number.getClass());
@@ -25,7 +34,7 @@ public class FillArrayDataPayloadOp extends MethodStateOp {
         if (klazz == byte.class) {
             value = number.byteValue();
             if (expectedClass == boolean.class) {
-                value = (byte) value == 1 ? true : false;
+                value = (byte) value == 1;
             }
         } else if (klazz == short.class) {
             value = number.shortValue();
@@ -56,16 +65,6 @@ public class FillArrayDataPayloadOp extends MethodStateOp {
         ArrayPayload instr = (ArrayPayload) instruction;
 
         return new FillArrayDataPayloadOp(address, opName, instr.getElementWidth(), instr.getArrayElements());
-    }
-
-    private final List<Number> arrayElements;
-    private final int elementWidth;
-
-    private FillArrayDataPayloadOp(int address, String opName, int elementWidth, List<Number> arrayElements) {
-        super(address, opName, 0); // childAddress / returnAddress not known until runtime
-
-        this.elementWidth = elementWidth;
-        this.arrayElements = arrayElements;
     }
 
     @Override

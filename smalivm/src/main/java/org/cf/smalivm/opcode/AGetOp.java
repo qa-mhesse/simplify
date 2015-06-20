@@ -1,7 +1,5 @@
 package org.cf.smalivm.opcode;
 
-import java.lang.reflect.Array;
-
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.context.ExecutionNode;
 import org.cf.smalivm.context.HeapItem;
@@ -11,9 +9,25 @@ import org.jf.dexlib2.iface.instruction.formats.Instruction23x;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
+
 public class AGetOp extends MethodStateOp {
 
     private static final Logger log = LoggerFactory.getLogger(AGetOp.class.getSimpleName());
+    private final int valueRegister;
+    private final int arrayRegister;
+    private final int indexRegister;
+
+    public AGetOp(int address, String opName, int childAddress, int valueRegister, int arrayRegister, int indexRegister) {
+        super(address, opName, childAddress);
+
+        this.valueRegister = valueRegister;
+        this.arrayRegister = arrayRegister;
+        this.indexRegister = indexRegister;
+
+        addException(new VirtualException(NullPointerException.class));
+        addException(new VirtualException(ArrayIndexOutOfBoundsException.class));
+    }
 
     private static String getUnknownArrayInnerType(HeapItem array) {
         String outerType = array.getType();
@@ -37,21 +51,6 @@ public class AGetOp extends MethodStateOp {
         int indexRegister = instr.getRegisterC();
 
         return new AGetOp(address, opName, childAddress, valueRegister, arrayRegister, indexRegister);
-    }
-
-    private final int valueRegister;
-    private final int arrayRegister;
-    private final int indexRegister;
-
-    public AGetOp(int address, String opName, int childAddress, int valueRegister, int arrayRegister, int indexRegister) {
-        super(address, opName, childAddress);
-
-        this.valueRegister = valueRegister;
-        this.arrayRegister = arrayRegister;
-        this.indexRegister = indexRegister;
-
-        addException(new VirtualException(NullPointerException.class));
-        addException(new VirtualException(ArrayIndexOutOfBoundsException.class));
     }
 
     @Override

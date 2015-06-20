@@ -1,8 +1,8 @@
 package org.cf.simplify;
 
-import java.io.IOException;
-
 import org.cf.smalivm.exception.UnhandledVirtualException;
+
+import java.io.IOException;
 
 public class Main {
 

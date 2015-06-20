@@ -1,10 +1,5 @@
 package org.cf.smalivm.emulate;
 
-import java.lang.reflect.Field;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.cf.smalivm.ClassManager;
 import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.VirtualException;
@@ -17,6 +12,11 @@ import org.cf.smalivm.type.UnknownValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class java_lang_Class_getField implements MethodStateMethod {
 
     private static final Logger log = LoggerFactory.getLogger(java_lang_Class_getField.class.getSimpleName());
@@ -27,8 +27,13 @@ public class java_lang_Class_getField implements MethodStateMethod {
     private SideEffect.Level level;
 
     java_lang_Class_getField() {
-        exceptions = new HashSet<VirtualException>();
+        exceptions = new HashSet<>();
         level = SideEffect.Level.NONE;
+    }
+
+    private static Field getNonLocalField(Class<?> klazz, String fieldName) throws NoSuchFieldException,
+            SecurityException {
+        return klazz.getField(fieldName);
     }
 
     @Override
@@ -83,19 +88,11 @@ public class java_lang_Class_getField implements MethodStateMethod {
         List<String> fieldNameAndTypes = classManager.getFieldNameAndTypes(className);
         for (String fieldNameAndType : fieldNameAndTypes) {
             if (fieldNameAndType.startsWith(fieldName)) {
-                StringBuilder sb = new StringBuilder(className);
-                sb.append("->").append(fieldNameAndType);
-
-                return new LocalField(sb.toString());
+                return new LocalField(className + "->" + fieldNameAndType);
             }
         }
 
         return null;
-    }
-
-    private static Field getNonLocalField(Class<?> klazz, String fieldName) throws NoSuchFieldException,
-                    SecurityException {
-        return klazz.getField(fieldName);
     }
 
     @Override

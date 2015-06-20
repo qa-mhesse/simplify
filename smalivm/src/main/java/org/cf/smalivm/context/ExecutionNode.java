@@ -1,16 +1,16 @@
 package org.cf.smalivm.context;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.opcode.ExecutionContextOp;
 import org.cf.smalivm.opcode.MethodStateOp;
 import org.cf.smalivm.opcode.Op;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ExecutionNode {
 
@@ -19,20 +19,20 @@ public class ExecutionNode {
     private static Logger log = LoggerFactory.getLogger(ExecutionNode.class.getSimpleName());
 
     private final List<ExecutionNode> children;
-    private ExecutionContext ectx;
     private final Op op;
+    private ExecutionContext ectx;
     private ExecutionNode parent;
     private int[] childAddresses;
     private Set<VirtualException> exceptions;
 
     public ExecutionNode(ExecutionNode other) {
         op = other.op;
-        children = new ArrayList<ExecutionNode>(other.getChildren());
+        children = new ArrayList<>(other.getChildren());
     }
 
     public ExecutionNode(Op op) {
         this.op = op;
-        children = new ArrayList<ExecutionNode>(op.getChildren().length);
+        children = new ArrayList<>(op.getChildren().length);
     }
 
     public void clearChildAddresses() {
@@ -40,16 +40,13 @@ public class ExecutionNode {
     }
 
     public void clearExceptions() {
-        exceptions = new HashSet<VirtualException>();
+        exceptions = new HashSet<>();
     }
 
     public void execute() {
         ExecutionContext ectx = getContext();
         if (log.isDebugEnabled()) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("HANDLING @").append(op.getAddress()).append(": ").append(op);
-            sb.append("\nContext before:\n").append(ectx);
-            log.debug(sb.toString());
+            log.debug("HANDLING @" + op.getAddress() + ": " + op + "\nContext before:\n" + ectx);
         }
 
         if (op instanceof MethodStateOp) {
@@ -85,6 +82,10 @@ public class ExecutionNode {
         return childAddresses;
     }
 
+    public void setChildAddresses(int... childAddresses) {
+        this.childAddresses = childAddresses;
+    }
+
     public List<ExecutionNode> getChildren() {
         return children;
     }
@@ -93,8 +94,16 @@ public class ExecutionNode {
         return ectx;
     }
 
+    public void setContext(ExecutionContext ectx) {
+        this.ectx = ectx;
+    }
+
     public Set<VirtualException> getExceptions() {
         return exceptions;
+    }
+
+    public void setExceptions(Set<VirtualException> exceptions) {
+        this.exceptions = exceptions;
     }
 
     public Op getOp() {
@@ -103,6 +112,15 @@ public class ExecutionNode {
 
     public ExecutionNode getParent() {
         return parent;
+    }
+
+    public void setParent(ExecutionNode parent) {
+        // All nodes will have [0,1] parents since a node represents both an instruction and a context, or vm state.
+        // Each execution of an instruction will have a new state.
+        this.parent = parent;
+        if (parent != null) {
+            parent.addChild(this);
+        }
     }
 
     public boolean mayThrowException() {
@@ -121,34 +139,13 @@ public class ExecutionNode {
         newChild.setParent(this);
     }
 
-    public void setChildAddresses(int... childAddresses) {
-        this.childAddresses = childAddresses;
-    }
-
-    public void setContext(ExecutionContext ectx) {
-        this.ectx = ectx;
-    }
-
     public void setException(VirtualException exception) {
         exceptions = new HashSet<VirtualException>();
         exceptions.add(exception);
     }
 
-    public void setExceptions(Set<VirtualException> exceptions) {
-        this.exceptions = exceptions;
-    }
-
     public void setMethodState(MethodState mState) {
         ectx.setMethodState(mState);
-    }
-
-    public void setParent(ExecutionNode parent) {
-        // All nodes will have [0,1] parents since a node represents both an instruction and a context, or vm state.
-        // Each execution of an instruction will have a new state.
-        this.parent = parent;
-        if (parent != null) {
-            parent.addChild(this);
-        }
     }
 
     public ExecutionNode spawnChild(Op childOp) {

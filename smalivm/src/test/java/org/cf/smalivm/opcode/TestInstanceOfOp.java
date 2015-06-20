@@ -1,7 +1,6 @@
 package org.cf.smalivm.opcode;
 
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.context.HeapItem;
 import org.cf.smalivm.type.UnknownValue;
@@ -19,9 +18,9 @@ public class TestInstanceOfOp {
         @Test
         public void testStringIsInstanceOfObject() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, false, "Z", 1, "great maker",
-                            "Ljava/lang/String;");
+                    "Ljava/lang/String;");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, true, "Z", 1, "great maker",
-                            "Ljava/lang/String;");
+                    "Ljava/lang/String;");
 
             VMTester.testMethodState(CLASS_NAME, "InstanceOfObject()V", initial, expected);
         }
@@ -29,9 +28,9 @@ public class TestInstanceOfOp {
         @Test
         public void testUnknownValueWithObjectAsDeclaredTypeIsUnknownIfStringType() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, false, "Z", 1, new UnknownValue(),
-                            "Ljava/lang/Object;");
+                    "Ljava/lang/Object;");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, new UnknownValue(), "Z", 1,
-                            new UnknownValue(), "Ljava/lang/Object;");
+                    new UnknownValue(), "Ljava/lang/Object;");
 
             VMTester.testMethodState(CLASS_NAME, "InstanceOfString()V", initial, expected);
         }
@@ -39,9 +38,9 @@ public class TestInstanceOfOp {
         @Test
         public void testUnknownValueWithStringAsDeclaredTypeIsObject() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, false, "Z", 1, new UnknownValue(),
-                            "Ljava/lang/String;");
+                    "Ljava/lang/String;");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, true, "Z", 1, new UnknownValue(),
-                            "Ljava/lang/String;");
+                    "Ljava/lang/String;");
 
             VMTester.testMethodState(CLASS_NAME, "InstanceOfObject()V", initial, expected);
         }
@@ -51,7 +50,7 @@ public class TestInstanceOfOp {
             // Starting true just to see that it changes.
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, true, "Z", 1, null, "Ljava/lang/Object;");
             TIntObjectMap<HeapItem> expected = VMTester
-                            .buildRegisterState(0, false, "Z", 1, null, "Ljava/lang/Object;");
+                    .buildRegisterState(0, false, "Z", 1, null, "Ljava/lang/Object;");
 
             VMTester.testMethodState(CLASS_NAME, "InstanceOfString()V", initial, expected);
         }
@@ -60,9 +59,9 @@ public class TestInstanceOfOp {
         public void testIntArrayWithObjectAsDeclaredTypeIsInstanceOfIntArray() {
             // Starting true just to see that it changes.
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, false, "Z", 1, new int[0],
-                            "Ljava/lang/Object;");
+                    "Ljava/lang/Object;");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, true, "Z", 1, new int[0],
-                            "Ljava/lang/Object;");
+                    "Ljava/lang/Object;");
 
             VMTester.testMethodState(CLASS_NAME, "InstanceOfIntArray()V", initial, expected);
         }

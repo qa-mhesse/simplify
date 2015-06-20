@@ -2,15 +2,6 @@ package org.cf.simplify.strategy;
 
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import org.cf.simplify.ConstantBuilder;
 import org.cf.simplify.MethodBackedGraph;
 import org.cf.smalivm.ClassManager;
@@ -24,13 +15,7 @@ import org.cf.util.Utils;
 import org.jf.dexlib2.AccessFlags;
 import org.jf.dexlib2.Opcode;
 import org.jf.dexlib2.builder.BuilderInstruction;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction11x;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction21c;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction22c;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction23x;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction32x;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction35c;
-import org.jf.dexlib2.builder.instruction.BuilderInstruction3rc;
+import org.jf.dexlib2.builder.instruction.*;
 import org.jf.dexlib2.iface.MethodImplementation;
 import org.jf.dexlib2.iface.instruction.ReferenceInstruction;
 import org.jf.dexlib2.iface.reference.FieldReference;
@@ -43,7 +28,29 @@ import org.jf.dexlib2.writer.builder.BuilderTypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 public class ReflectionRemovalStrategy implements OptimizationStrategy {
+
+    @SuppressWarnings("unused")
+    private static final Logger log = LoggerFactory.getLogger(ReflectionRemovalStrategy.class.getSimpleName());
+    private static final String MethodInvokeSignature = "Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;";
+    private static final String FieldGetSignature = "Ljava/lang/reflect/Field;->get(Ljava/lang/Object;)Ljava/lang/Object;";
+    private final MethodBackedGraph mbgraph;
+    private int unreflectCount;
+    private TIntList addresses;
+    private boolean madeChanges;
+
+    public ReflectionRemovalStrategy(MethodBackedGraph mbgraph) {
+        this.mbgraph = mbgraph;
+        unreflectCount = 0;
+    }
 
     private static TIntList getFourBitValues(TIntList values) {
         TIntList fourBitValues = new TIntArrayList();
@@ -64,20 +71,49 @@ public class ReflectionRemovalStrategy implements OptimizationStrategy {
         f.set(implementation, Integer.valueOf(registerCount));
     }
 
-    @SuppressWarnings("unused")
-    private static final Logger log = LoggerFactory.getLogger(ReflectionRemovalStrategy.class.getSimpleName());
+    static Opcode getGetOpcode(String type, boolean isStatic) {
+        Opcode op;
+        if (isStatic) {
+            if (SmaliClassUtils.isPrimitiveType(type)) {
+                // wide, boolean, byte, char, short, get
+                if ("J".equals(type) || "D".equals(type)) {
+                    op = Opcode.SGET_WIDE;
+                } else if ("Z".equals(type)) {
+                    op = Opcode.SGET_BOOLEAN;
+                } else if ("B".equals(type)) {
+                    op = Opcode.SGET_BYTE;
+                } else if ("C".equals(type)) {
+                    op = Opcode.SGET_CHAR;
+                } else if ("S".equals(type)) {
+                    op = Opcode.SGET_SHORT;
+                } else {
+                    op = Opcode.SGET;
+                }
+            } else {
+                op = Opcode.SGET_OBJECT;
+            }
+        } else {
+            if (SmaliClassUtils.isPrimitiveType(type)) {
+                // wide, boolean, byte, char, short, get
+                if ("J".equals(type) || "D".equals(type)) {
+                    op = Opcode.IGET_WIDE;
+                } else if ("Z".equals(type)) {
+                    op = Opcode.IGET_BOOLEAN;
+                } else if ("B".equals(type)) {
+                    op = Opcode.IGET_BYTE;
+                } else if ("C".equals(type)) {
+                    op = Opcode.IGET_CHAR;
+                } else if ("S".equals(type)) {
+                    op = Opcode.IGET_SHORT;
+                } else {
+                    op = Opcode.IGET;
+                }
+            } else {
+                op = Opcode.IGET_OBJECT;
+            }
+        }
 
-    private static final String MethodInvokeSignature = "Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;";
-    private static final String FieldGetSignature = "Ljava/lang/reflect/Field;->get(Ljava/lang/Object;)Ljava/lang/Object;";
-    private final MethodBackedGraph mbgraph;
-
-    private int unreflectCount;
-    private TIntList addresses;
-    private boolean madeChanges;
-
-    public ReflectionRemovalStrategy(MethodBackedGraph mbgraph) {
-        this.mbgraph = mbgraph;
-        unreflectCount = 0;
+        return op;
     }
 
     @Override
@@ -107,20 +143,20 @@ public class ReflectionRemovalStrategy implements OptimizationStrategy {
         String returnType = SmaliClassUtils.javaClassToSmali(method.getReturnType());
 
         ImmutableMethodReference immutableMethodRef = new ImmutableMethodReference(className, name, parameterTypes,
-                        returnType);
+                returnType);
         MethodReference methodRef = mbgraph.getDexBuilder().internMethodReference(immutableMethodRef);
 
         return methodRef;
     }
 
     private List<BuilderInstruction> getArrayAccessorInstructions(int arrayRegister, TIntList registers,
-                    List<String> parameterTypes) {
+                                                                  List<String> parameterTypes) {
         List<BuilderInstruction> instructions = new LinkedList<BuilderInstruction>();
         for (int index = 0; index < parameterTypes.size(); index++) {
             int register = registers.get(index);
             BuilderInstruction constInstruction = ConstantBuilder.buildConstant(index, register);
             BuilderInstruction arrayGet = new BuilderInstruction23x(Opcode.AGET_OBJECT, register, arrayRegister,
-                            register);
+                    register);
             String typeName = parameterTypes.get(index);
             if (SmaliClassUtils.isPrimitiveType(typeName)) {
                 // Check cast expects a type reference, which I've never seen to be a primitive type.
@@ -283,7 +319,7 @@ public class ReflectionRemovalStrategy implements OptimizationStrategy {
             instructions.add(move);
 
             instructions.addAll(getArrayAccessorInstructions(parametersRegister,
-                            registers.subList(1, registers.size()), parameterTypes));
+                    registers.subList(1, registers.size()), parameterTypes));
         } else {
             instructions.addAll(getArrayAccessorInstructions(parametersRegister, registers, parameterTypes));
         }
@@ -300,10 +336,10 @@ public class ReflectionRemovalStrategy implements OptimizationStrategy {
 
             if (isStatic) {
                 invoke = new BuilderInstruction35c(invokeOp, invokeRegisterCount, registers.get(0), registers.get(1),
-                                registers.get(2), registers.get(3), registers.get(4), methodRef);
+                        registers.get(2), registers.get(3), registers.get(4), methodRef);
             } else {
                 invoke = new BuilderInstruction35c(invokeOp, invokeRegisterCount, targetRegister, registers.get(0),
-                                registers.get(1), registers.get(2), registers.get(3), methodRef);
+                        registers.get(1), registers.get(2), registers.get(3), methodRef);
             }
         }
         instructions.add(invoke);
@@ -446,7 +482,7 @@ public class ReflectionRemovalStrategy implements OptimizationStrategy {
         } else {
             Field field = (Field) fieldValue;
             fieldRef = mbgraph.getDexBuilder()
-                            .internField(className, fieldName, type, field.getModifiers(), null, null);
+                    .internField(className, fieldName, type, field.getModifiers(), null, null);
             isStatic = Modifier.isStatic(field.getModifiers());
         }
         Opcode newOp = getGetOpcode(type, isStatic);
@@ -471,51 +507,6 @@ public class ReflectionRemovalStrategy implements OptimizationStrategy {
         }
 
         return replacement;
-    }
-
-    static Opcode getGetOpcode(String type, boolean isStatic) {
-        Opcode op;
-        if (isStatic) {
-            if (SmaliClassUtils.isPrimitiveType(type)) {
-                // wide, boolean, byte, char, short, get
-                if ("J".equals(type) || "D".equals(type)) {
-                    op = Opcode.SGET_WIDE;
-                } else if ("Z".equals(type)) {
-                    op = Opcode.SGET_BOOLEAN;
-                } else if ("B".equals(type)) {
-                    op = Opcode.SGET_BYTE;
-                } else if ("C".equals(type)) {
-                    op = Opcode.SGET_CHAR;
-                } else if ("S".equals(type)) {
-                    op = Opcode.SGET_SHORT;
-                } else {
-                    op = Opcode.SGET;
-                }
-            } else {
-                op = Opcode.SGET_OBJECT;
-            }
-        } else {
-            if (SmaliClassUtils.isPrimitiveType(type)) {
-                // wide, boolean, byte, char, short, get
-                if ("J".equals(type) || "D".equals(type)) {
-                    op = Opcode.IGET_WIDE;
-                } else if ("Z".equals(type)) {
-                    op = Opcode.IGET_BOOLEAN;
-                } else if ("B".equals(type)) {
-                    op = Opcode.IGET_BYTE;
-                } else if ("C".equals(type)) {
-                    op = Opcode.IGET_CHAR;
-                } else if ("S".equals(type)) {
-                    op = Opcode.IGET_SHORT;
-                } else {
-                    op = Opcode.IGET;
-                }
-            } else {
-                op = Opcode.IGET_OBJECT;
-            }
-        }
-
-        return op;
     }
 
     boolean canReplaceFieldGet(int address) {

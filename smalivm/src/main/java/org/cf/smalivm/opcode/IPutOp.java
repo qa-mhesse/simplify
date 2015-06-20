@@ -17,6 +17,20 @@ public class IPutOp extends ExecutionContextOp {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(IPutOp.class.getSimpleName());
+    private final String fieldDescriptor;
+    private final int valueRegister;
+    private final int instanceRegister;
+    private final VirtualMachine vm;
+
+    public IPutOp(int address, String opName, int childAddress, int valueRegister, int instanceRegister,
+                  String fieldDescriptor, VirtualMachine vm) {
+        super(address, opName, childAddress);
+
+        this.valueRegister = valueRegister;
+        this.instanceRegister = instanceRegister;
+        this.fieldDescriptor = fieldDescriptor;
+        this.vm = vm;
+    }
 
     static IPutOp create(Instruction instruction, int address, VirtualMachine vm) {
         String opName = instruction.getOpcode().name;
@@ -29,21 +43,6 @@ public class IPutOp extends ExecutionContextOp {
         String fieldDescriptor = ReferenceUtil.getFieldDescriptor(reference);
 
         return new IPutOp(address, opName, childAddress, valueRegister, instanceRegister, fieldDescriptor, vm);
-    }
-
-    private final String fieldDescriptor;
-    private final int valueRegister;
-    private final int instanceRegister;
-    private final VirtualMachine vm;
-
-    public IPutOp(int address, String opName, int childAddress, int valueRegister, int instanceRegister,
-                    String fieldDescriptor, VirtualMachine vm) {
-        super(address, opName, childAddress);
-
-        this.valueRegister = valueRegister;
-        this.instanceRegister = instanceRegister;
-        this.fieldDescriptor = fieldDescriptor;
-        this.vm = vm;
     }
 
     @Override
@@ -64,7 +63,7 @@ public class IPutOp extends ExecutionContextOp {
     public String toString() {
         StringBuilder sb = new StringBuilder(getName());
         sb.append(" r").append(valueRegister).append(", r").append(instanceRegister).append(", ")
-                        .append(fieldDescriptor);
+                .append(fieldDescriptor);
 
         return sb.toString();
     }

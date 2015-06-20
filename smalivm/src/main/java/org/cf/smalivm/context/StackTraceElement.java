@@ -36,11 +36,7 @@ public class StackTraceElement {
     @Override
     public String toString() {
         // E.g. java.lang.Thread.getStackTrace(Thread.java:1589)
-        StringBuilder sb = new StringBuilder(getDeclaringClass());
-        sb.append('.').append(getMethodName()).append('(').append(getFileName()).append(':').append(getLineNumber())
-                        .append(')');
-
-        return sb.toString();
+        return getDeclaringClass() + '.' + getMethodName() + '(' + getFileName() + ':' + getLineNumber() + ')';
     }
 
 }

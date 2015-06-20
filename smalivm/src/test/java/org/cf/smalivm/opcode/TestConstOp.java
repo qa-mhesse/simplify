@@ -1,7 +1,6 @@
 package org.cf.smalivm.opcode;
 
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.context.HeapItem;
 import org.cf.smalivm.type.LocalClass;
@@ -35,7 +34,7 @@ public class TestConstOp {
     @Test
     public void testConstClassLocal() {
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, new LocalClass(CLASS_NAME),
-                        "Ljava/lang/Class;");
+                "Ljava/lang/Class;");
 
         VMTester.testMethodState(CLASS_NAME, "TestConstClassLocal()V", expected);
     }
@@ -50,7 +49,7 @@ public class TestConstOp {
     @Test
     public void testConstClassOfUnknownClassReturnsLocalClass() {
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, new LocalClass("Lunknown/class;"),
-                        "Ljava/lang/Class;");
+                "Ljava/lang/Class;");
 
         VMTester.testMethodState(CLASS_NAME, "TestConstClassUnknown()V", expected);
     }
@@ -65,7 +64,7 @@ public class TestConstOp {
     @Test
     public void testConstString() {
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0,
-                        "When I need to identify rebels, I look for men with principles", "Ljava/lang/String;");
+                "When I need to identify rebels, I look for men with principles", "Ljava/lang/String;");
 
         VMTester.testMethodState(CLASS_NAME, "TestConstString()V", expected);
     }
@@ -73,8 +72,8 @@ public class TestConstOp {
     @Test
     public void testConstStringJumbo() {
         TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0,
-                        "When I need to identify JUMBO rebels, I look for JUMBO men with JUMBO principles",
-                        "Ljava/lang/String;");
+                "When I need to identify JUMBO rebels, I look for JUMBO men with JUMBO principles",
+                "Ljava/lang/String;");
 
         VMTester.testMethodState(CLASS_NAME, "TestConstStringJumbo()V", expected);
     }

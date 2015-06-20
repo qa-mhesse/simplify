@@ -1,18 +1,7 @@
 package org.cf.smalivm.emulate;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.HashSet;
-import java.util.Set;
-
-import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.ClassManager;
+import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.context.ExecutionContext;
@@ -23,18 +12,19 @@ import org.cf.smalivm.type.UnknownValue;
 import org.junit.Before;
 import org.junit.Test;
 
-public class Test_java_lang_Class_forName {
+import java.util.HashSet;
+import java.util.Set;
 
-    private VirtualMachine vm;
-    private ClassManager classManager;
-    private ExecutionContextMethod method;
-    private MethodState mState;
-    private ExecutionContext ectx;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
+
+public class Test_java_lang_Class_forName {
 
     private static final int CLASS_NAME_REGISTER = 0;
     private static final String CLASS_TYPE = "Ljava/lang/Class;";
     private static final String PARAMETER_TYPE = "Ljava/lang/String;";
-
     private static final String SAFE_CLASS_NAME = "java.lang.String";
     private static final Class<?> SAFE_CLASS = String.class;
     private static final String LOCAL_CLASS_NAME_SMALI = "Landroid/app/Activity;";
@@ -43,10 +33,14 @@ public class Test_java_lang_Class_forName {
     private static final String LOCAL_CLASS_NAME_JAVA = "android.app.Activity";
     private static final LocalClass LOCAL_CLASS = new LocalClass(LOCAL_CLASS_NAME_SMALI);
     private static final LocalClass LOCAL_CLASS_WITH_STRONG_SIDE_EFFECTS = new LocalClass(
-                    LOCAL_CLASS_WITH_STRONG_SIDE_EFFECTS_NAME_SMALI);
-
+            LOCAL_CLASS_WITH_STRONG_SIDE_EFFECTS_NAME_SMALI);
     private static final String UNKNOWN_CLASS_NAME_SMALI = "Lsome/random123/class;";
     private static final String UNKNOWN_CLASS_NAME_JAVA = "some.random123.class";
+    private VirtualMachine vm;
+    private ClassManager classManager;
+    private ExecutionContextMethod method;
+    private MethodState mState;
+    private ExecutionContext ectx;
 
     @Before
     public void setUp() {
@@ -63,7 +57,7 @@ public class Test_java_lang_Class_forName {
 
         when(ectx.getClassSideEffectLevel(LOCAL_CLASS_NAME_SMALI)).thenReturn(SideEffect.Level.NONE);
         when(ectx.getClassSideEffectLevel(LOCAL_CLASS_WITH_STRONG_SIDE_EFFECTS_NAME_SMALI)).thenReturn(
-                        SideEffect.Level.STRONG);
+                SideEffect.Level.STRONG);
 
         method = new java_lang_Class_forName();
     }
@@ -107,7 +101,7 @@ public class Test_java_lang_Class_forName {
 
         method.execute(vm, ectx);
 
-        Set<VirtualException> expectedExceptions = new HashSet<VirtualException>();
+        Set<VirtualException> expectedExceptions = new HashSet<>();
         expectedExceptions.add(new VirtualException(ClassNotFoundException.class, UNKNOWN_CLASS_NAME_SMALI));
         assertEquals(expectedExceptions, method.getExceptions());
         verify(mState, times(0)).assignReturnRegister(any(UnknownValue.class), eq(CLASS_TYPE));

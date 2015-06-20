@@ -9,9 +9,22 @@ import org.jf.dexlib2.iface.instruction.TwoRegisterInstruction;
 
 public class MoveOp extends MethodStateOp {
 
-    private static enum MoveType {
-        EXCEPTION, REGISTER, RESULT
-    };
+    private final MoveType moveType;
+
+    ;
+    private final int toRegister;
+    private int targetRegister;
+
+    private MoveOp(int address, String opName, int nextInstructionAddress, int toRegister, int targetRegister) {
+        this(address, opName, nextInstructionAddress, toRegister, MoveType.REGISTER);
+        this.targetRegister = targetRegister;
+    }
+
+    private MoveOp(int address, String opName, int childAddress, int toRegister, MoveType moveType) {
+        super(address, opName, childAddress);
+        this.toRegister = toRegister;
+        this.moveType = moveType;
+    }
 
     private static void moveException(MethodState mState, int toRegister) {
         String type = "Ljava/lang/Exception;";
@@ -46,33 +59,18 @@ public class MoveOp extends MethodStateOp {
         }
     }
 
-    private final MoveType moveType;
-    private int targetRegister;
-    private final int toRegister;
-
-    private MoveOp(int address, String opName, int nextInstructionAddress, int toRegister, int targetRegister) {
-        this(address, opName, nextInstructionAddress, toRegister, MoveType.REGISTER);
-        this.targetRegister = targetRegister;
-    }
-
-    private MoveOp(int address, String opName, int childAddress, int toRegister, MoveType moveType) {
-        super(address, opName, childAddress);
-        this.toRegister = toRegister;
-        this.moveType = moveType;
-    }
-
     @Override
     public void execute(ExecutionNode node, MethodState mState) {
         switch (moveType) {
-        case EXCEPTION:
-            moveException(mState, toRegister);
-            break;
-        case RESULT:
-            moveResult(mState, toRegister);
-            break;
-        case REGISTER:
-            moveRegister(mState, toRegister, targetRegister);
-            break;
+            case EXCEPTION:
+                moveException(mState, toRegister);
+                break;
+            case RESULT:
+                moveResult(mState, toRegister);
+                break;
+            case REGISTER:
+                moveRegister(mState, toRegister, targetRegister);
+                break;
         }
     }
 
@@ -85,6 +83,10 @@ public class MoveOp extends MethodStateOp {
         }
 
         return sb.toString();
+    }
+
+    private static enum MoveType {
+        EXCEPTION, REGISTER, RESULT
     }
 
 }

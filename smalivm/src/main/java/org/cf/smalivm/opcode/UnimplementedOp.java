@@ -9,26 +9,7 @@ import org.jf.dexlib2.iface.instruction.OneRegisterInstruction;
 
 class UnimplementedOp extends MethodStateOp {
 
-    static UnimplementedOp create(Instruction instruction, int address) {
-        UnimplementedOp result = null;
-
-        int childAddress = address + instruction.getCodeUnits();
-        Opcode op = instruction.getOpcode();
-
-        if (instruction instanceof OneRegisterInstruction) {
-            OneRegisterInstruction instr = (OneRegisterInstruction) instruction;
-            int registerA = instr.getRegisterA();
-
-            result = new UnimplementedOp(address, op.name, childAddress, op.canContinue(), op.canThrow(),
-                            op.setsResult(), op.setsRegister(), registerA);
-        } else {
-            result = new UnimplementedOp(address, op.name, childAddress, op.canContinue(), op.canThrow(),
-                            op.setsResult());
-        }
-
-        return result;
-    }
-
+    private static final String UNKNOWN_TYPE = "?";
     private final boolean canContinue;
     private final boolean canThrow;
     private final int registerA;
@@ -51,7 +32,25 @@ class UnimplementedOp extends MethodStateOp {
         this.registerA = registerA;
     }
 
-    private static final String UNKNOWN_TYPE = "?";
+    static UnimplementedOp create(Instruction instruction, int address) {
+        UnimplementedOp result;
+
+        int childAddress = address + instruction.getCodeUnits();
+        Opcode op = instruction.getOpcode();
+
+        if (instruction instanceof OneRegisterInstruction) {
+            OneRegisterInstruction instr = (OneRegisterInstruction) instruction;
+            int registerA = instr.getRegisterA();
+
+            result = new UnimplementedOp(address, op.name, childAddress, op.canContinue(), op.canThrow(),
+                    op.setsResult(), op.setsRegister(), registerA);
+        } else {
+            result = new UnimplementedOp(address, op.name, childAddress, op.canContinue(), op.canThrow(),
+                    op.setsResult());
+        }
+
+        return result;
+    }
 
     @Override
     public void execute(ExecutionNode node, MethodState mState) {

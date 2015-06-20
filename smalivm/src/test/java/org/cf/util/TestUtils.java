@@ -1,15 +1,15 @@
 package org.cf.util;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import org.cf.smalivm.type.LocalInstance;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import org.cf.smalivm.type.LocalInstance;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class TestUtils {
 
@@ -132,7 +132,7 @@ public class TestUtils {
 
     @Test
     public void getRegisterSizeWithEmptyListReturnsZero() {
-        List<String> typeNames = new LinkedList<String>();
+        List<String> typeNames = new LinkedList<>();
         int expected = 0;
         int actual = Utils.getRegisterSize(typeNames);
 
@@ -141,7 +141,7 @@ public class TestUtils {
 
     @Test
     public void getRegisterSizeWithTwoOneRegisterTypesReturnsTwo() {
-        List<String> typeNames = new LinkedList<String>();
+        List<String> typeNames = new LinkedList<>();
         typeNames.add("I"); // 1
         typeNames.add("J"); // 2
         typeNames.add("D"); // 2

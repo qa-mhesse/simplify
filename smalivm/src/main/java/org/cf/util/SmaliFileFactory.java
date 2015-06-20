@@ -1,18 +1,13 @@
 package org.cf.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.io.FileUtils;
 import org.cf.smalivm.SmaliFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 public class SmaliFileFactory {
 
@@ -22,8 +17,19 @@ public class SmaliFileFactory {
 
     private Map<String, SmaliFile> frameworkClassNameToSmaliFile;
 
+    private static List<File> getFilesWithSmaliExtension(File file) {
+        List<File> files = new LinkedList<>();
+        if (file.isDirectory()) {
+            files = (List<File>) FileUtils.listFiles(file, new String[]{"smali"}, true);
+        } else if (file.getAbsolutePath().toLowerCase().endsWith(".smali")) {
+            files.add(file);
+        }
+
+        return files;
+    }
+
     public Set<SmaliFile> getSmaliFiles(String path) throws IOException {
-        return getSmaliFiles(new String[] { path });
+        return getSmaliFiles(new String[]{path});
     }
 
     public Set<SmaliFile> getSmaliFiles(String[] paths) throws IOException {
@@ -36,7 +42,7 @@ public class SmaliFileFactory {
     }
 
     public Set<SmaliFile> getSmaliFiles(File file) throws IOException {
-        return getSmaliFiles(new File[] { file });
+        return getSmaliFiles(new File[]{file});
     }
 
     public boolean isFrameworkClass(String className) {
@@ -45,11 +51,7 @@ public class SmaliFileFactory {
 
     public boolean isSafeFrameworkClass(String className) {
         SmaliFile smaliFile = frameworkClassNameToSmaliFile.get(className);
-        if (null == smaliFile) {
-            return false;
-        }
-
-        return smaliFile.isSafeFrameworkClass();
+        return null != smaliFile && smaliFile.isSafeFrameworkClass();
     }
 
     private synchronized void cacheFramework() throws IOException {
@@ -57,11 +59,11 @@ public class SmaliFileFactory {
             return;
         }
 
-        frameworkCache = new HashMap<String, SmaliFile>();
+        frameworkCache = new HashMap<>();
 
         long startTime = System.currentTimeMillis();
         List<String> frameworkClassesCfg = ConfigLoader.loadConfig("framework_classes.cfg");
-        Set<String> safeFrameworkClasses = new HashSet<String>(ConfigLoader.loadConfig("safe_framework_classes.cfg"));
+        Set<String> safeFrameworkClasses = new HashSet<>(ConfigLoader.loadConfig("safe_framework_classes.cfg"));
         for (String line : frameworkClassesCfg) {
             String[] parts = line.split(":");
             String className = parts[0];
@@ -75,16 +77,13 @@ public class SmaliFileFactory {
         if (log.isDebugEnabled()) {
             long endTime = System.currentTimeMillis();
             long totalTime = endTime - startTime; // assuming time has not gone backwards
-            StringBuilder sb = new StringBuilder();
-            sb.append("Cached ").append(frameworkCache.size()).append(" framework classes in ").append(totalTime)
-                            .append(" ms.");
-            log.debug(sb.toString());
+            log.debug("Cached " + frameworkCache.size() + " framework classes in " + totalTime + " ms.");
         }
     }
 
     public Set<SmaliFile> getSmaliFiles(File[] files) throws IOException {
-        Set<SmaliFile> smaliFiles = new HashSet<SmaliFile>();
-        Set<String> inputClasses = new HashSet<String>();
+        Set<SmaliFile> smaliFiles = new HashSet<>();
+        Set<String> inputClasses = new HashSet<>();
         for (File file : files) {
             List<File> matches = getFilesWithSmaliExtension(file);
             for (File match : matches) {
@@ -97,7 +96,7 @@ public class SmaliFileFactory {
         cacheFramework();
 
         // Override framework classes with input classes of the same name
-        frameworkClassNameToSmaliFile = new HashMap<String, SmaliFile>(frameworkCache);
+        frameworkClassNameToSmaliFile = new HashMap<>(frameworkCache);
         List<Map.Entry<String, SmaliFile>> entriesToRemove = new LinkedList<Map.Entry<String, SmaliFile>>();
         for (Map.Entry<String, SmaliFile> entry : frameworkClassNameToSmaliFile.entrySet()) {
             if (inputClasses.contains(entry.getKey())) {
@@ -109,17 +108,6 @@ public class SmaliFileFactory {
         frameworkClassNameToSmaliFile.entrySet().removeAll(entriesToRemove);
 
         return smaliFiles;
-    }
-
-    private static List<File> getFilesWithSmaliExtension(File file) {
-        List<File> files = new LinkedList<File>();
-        if (file.isDirectory()) {
-            files = (List<File>) FileUtils.listFiles(file, new String[] { "smali" }, true);
-        } else if (file.getAbsolutePath().toLowerCase().endsWith(".smali")) {
-            files.add(file);
-        }
-
-        return files;
     }
 
 }

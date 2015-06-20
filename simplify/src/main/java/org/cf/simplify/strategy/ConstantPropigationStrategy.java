@@ -1,8 +1,5 @@
 package org.cf.simplify.strategy;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.cf.simplify.ConstantBuilder;
 import org.cf.simplify.Dependancy;
 import org.cf.simplify.MethodBackedGraph;
@@ -13,16 +10,18 @@ import org.jf.dexlib2.iface.instruction.OneRegisterInstruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ConstantPropigationStrategy implements OptimizationStrategy {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(ConstantPropigationStrategy.class.getSimpleName());
 
     private final MethodBackedGraph mbgraph;
+    protected ConstantBuilder constantBuilder;
     private int constantCount;
     private boolean madeChanges;
-
-    protected ConstantBuilder constantBuilder;
 
     public ConstantPropigationStrategy(MethodBackedGraph mbgraph) {
         getDependancies();

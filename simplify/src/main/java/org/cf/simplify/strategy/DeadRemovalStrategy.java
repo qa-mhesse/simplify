@@ -4,23 +4,12 @@ import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.cf.simplify.MethodBackedGraph;
 import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.context.ExecutionContext;
 import org.cf.smalivm.context.ExecutionNode;
 import org.cf.smalivm.context.MethodState;
-import org.cf.smalivm.opcode.APutOp;
-import org.cf.smalivm.opcode.GotoOp;
-import org.cf.smalivm.opcode.InvokeOp;
-import org.cf.smalivm.opcode.NopOp;
-import org.cf.smalivm.opcode.Op;
+import org.cf.smalivm.opcode.*;
 import org.jf.dexlib2.builder.BuilderExceptionHandler;
 import org.jf.dexlib2.builder.BuilderInstruction;
 import org.jf.dexlib2.builder.BuilderTryBlock;
@@ -28,14 +17,31 @@ import org.jf.dexlib2.iface.instruction.OffsetInstruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+
 public class DeadRemovalStrategy implements OptimizationStrategy {
 
     private static final Logger log = LoggerFactory.getLogger(DeadRemovalStrategy.class.getSimpleName());
 
     private static final SideEffect.Level SIDE_EFFECT_THRESHOLD = SideEffect.Level.WEAK;
+    private final MethodBackedGraph mbgraph;
+    private TIntList addresses;
+    private int deadAssignmentCount;
+    private int deadBranchCount;
+    private int deadCount;
+    private int deadResultCount;
+
+    public DeadRemovalStrategy(MethodBackedGraph mbgraph) {
+        this.mbgraph = mbgraph;
+        addresses = getValidAddresses(mbgraph);
+        deadAssignmentCount = 0;
+        deadBranchCount = 0;
+        deadCount = 0;
+        deadResultCount = 0;
+    }
 
     private static boolean isAnyRegisterUsed(int address, TIntSet registerSet, MethodBackedGraph graph) {
-        Deque<ExecutionNode> stack = new ArrayDeque<ExecutionNode>(graph.getChildren(address));
+        Deque<ExecutionNode> stack = new ArrayDeque<>(graph.getChildren(address));
         ExecutionNode node;
         int[] registers = registerSet.toArray();
         TIntSet reassigned = new TIntHashSet();
@@ -51,7 +57,7 @@ public class DeadRemovalStrategy implements OptimizationStrategy {
                 if (mState.wasRegisterRead(register)) {
                     if (log.isTraceEnabled()) {
                         log.trace("r" + register + " is read after " + address + " @ " + node.getAddress() + ", "
-                                        + node.getOp());
+                                + node.getOp());
                     }
 
                     return true;
@@ -60,12 +66,11 @@ public class DeadRemovalStrategy implements OptimizationStrategy {
                 else if (mState.wasRegisterAssigned(register) && !(node.getOp() instanceof APutOp)) {
                     if (log.isTraceEnabled()) {
                         log.trace("r" + register + " is reassigned after " + address + " @ " + node.getAddress() + ", "
-                                        + node.getOp());
+                                + node.getOp());
                     }
 
                     // Go on to the next register. This one is for sure not used, but maybe others are.
                     reassigned.add(register);
-                    continue;
                 }
             }
             stack.addAll(node.getChildren());
@@ -74,26 +79,32 @@ public class DeadRemovalStrategy implements OptimizationStrategy {
         return false;
     }
 
-    private TIntList addresses;
-    private int deadAssignmentCount;
-    private int deadBranchCount;
-    private int deadCount;
-    private int deadResultCount;
+    private static TIntSet getExceptionHandlerCodeAddresses(MethodBackedGraph mbgraph) {
+        TIntSet result = new TIntHashSet();
+        List<BuilderTryBlock> tryBlocks = mbgraph.getTryBlocks();
+        for (BuilderTryBlock tryBlock : tryBlocks) {
+            List<? extends BuilderExceptionHandler> handlers = tryBlock.getExceptionHandlers();
+            for (BuilderExceptionHandler handler : handlers) {
+                int address = handler.getHandlerCodeAddress();
+                BuilderInstruction instruction = mbgraph.getInstruction(address);
+                do {
+                    // Add all instructions until return, goto, etc.
+                    result.add(address);
+                    address += instruction.getCodeUnits();
+                    instruction = mbgraph.getInstruction(address);
+                    if (instruction != null) {
+                        result.add(address);
+                    }
+                } while ((instruction != null) && instruction.getOpcode().canContinue());
+            }
+        }
 
-    private final MethodBackedGraph mbgraph;
-
-    public DeadRemovalStrategy(MethodBackedGraph mbgraph) {
-        this.mbgraph = mbgraph;
-        addresses = getValidAddresses(mbgraph);
-        deadAssignmentCount = 0;
-        deadBranchCount = 0;
-        deadCount = 0;
-        deadResultCount = 0;
+        return result;
     }
 
     @Override
     public Map<String, Integer> getOptimizationCounts() {
-        Map<String, Integer> result = new HashMap<String, Integer>();
+        Map<String, Integer> result = new HashMap<>();
         result.put("dead", deadCount);
         result.put("deadAssignment", deadAssignmentCount);
         result.put("deadResult", deadResultCount);
@@ -291,29 +302,6 @@ public class DeadRemovalStrategy implements OptimizationStrategy {
             }
 
             result.add(address);
-        }
-
-        return result;
-    }
-
-    private static TIntSet getExceptionHandlerCodeAddresses(MethodBackedGraph mbgraph) {
-        TIntSet result = new TIntHashSet();
-        List<BuilderTryBlock> tryBlocks = mbgraph.getTryBlocks();
-        for (BuilderTryBlock tryBlock : tryBlocks) {
-            List<? extends BuilderExceptionHandler> handlers = tryBlock.getExceptionHandlers();
-            for (BuilderExceptionHandler handler : handlers) {
-                int address = handler.getHandlerCodeAddress();
-                BuilderInstruction instruction = mbgraph.getInstruction(address);
-                do {
-                    // Add all instructions until return, goto, etc.
-                    result.add(address);
-                    address += instruction.getCodeUnits();
-                    instruction = mbgraph.getInstruction(address);
-                    if (instruction != null) {
-                        result.add(address);
-                    }
-                } while ((instruction != null) && instruction.getOpcode().canContinue());
-            }
         }
 
         return result;

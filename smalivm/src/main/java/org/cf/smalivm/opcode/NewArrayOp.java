@@ -16,6 +16,20 @@ import org.slf4j.LoggerFactory;
 public class NewArrayOp extends MethodStateOp {
 
     private static final Logger log = LoggerFactory.getLogger(NewArrayOp.class.getSimpleName());
+    private final int destRegister;
+    private final int lengthRegister;
+    private final boolean useLocalClass;
+    private final String arrayType;
+
+    private NewArrayOp(int address, String opName, int childAddress, int destRegister, int lengthRegister,
+                       String arrayType, boolean useLocalClass) {
+        super(address, opName, childAddress);
+
+        this.destRegister = destRegister;
+        this.lengthRegister = lengthRegister;
+        this.arrayType = arrayType;
+        this.useLocalClass = useLocalClass;
+    }
 
     static NewArrayOp create(Instruction instruction, int address, VirtualMachine vm) {
         String opName = instruction.getOpcode().name;
@@ -37,21 +51,6 @@ public class NewArrayOp extends MethodStateOp {
         }
 
         return new NewArrayOp(address, opName, childAddress, destRegister, sizeRegister, arrayType, useLocalClass);
-    }
-
-    private final int destRegister;
-    private final int lengthRegister;
-    private final boolean useLocalClass;
-    private final String arrayType;
-
-    private NewArrayOp(int address, String opName, int childAddress, int destRegister, int lengthRegister,
-                    String arrayType, boolean useLocalClass) {
-        super(address, opName, childAddress);
-
-        this.destRegister = destRegister;
-        this.lengthRegister = lengthRegister;
-        this.arrayType = arrayType;
-        this.useLocalClass = useLocalClass;
     }
 
     @Override

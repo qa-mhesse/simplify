@@ -1,13 +1,7 @@
 package org.cf.smalivm.emulate;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.ClassManager;
+import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.context.ExecutionContext;
@@ -20,6 +14,12 @@ import org.jf.dexlib2.util.ReferenceUtil;
 import org.jf.dexlib2.writer.builder.BuilderField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class java_lang_reflect_Field_get implements ExecutionContextMethod {
 
@@ -72,7 +72,7 @@ public class java_lang_reflect_Field_get implements ExecutionContextMethod {
     }
 
     private boolean checkAccess(String callingClassSmali, String definingClassSmali, int accessFlags,
-                    ClassManager classManager) {
+                                ClassManager classManager) {
         boolean isPrivate = Modifier.isPrivate(accessFlags);
         boolean isProtected = Modifier.isProtected(accessFlags);
 
@@ -84,8 +84,8 @@ public class java_lang_reflect_Field_get implements ExecutionContextMethod {
                     StringBuilder sb = new StringBuilder();
                     String modifiers = Modifier.toString(accessFlags);
                     sb.append("Class ").append(callingClassJava).append(" can not access a member of class ")
-                                    .append(definingClassJava).append(" with modifiers \"").append(modifiers)
-                                    .append("\"");
+                            .append(definingClassJava).append(" with modifiers \"").append(modifiers)
+                            .append("\"");
                     setException(new VirtualException(IllegalAccessException.class, sb.toString()));
                     return false;
                 } else { // isProtected
@@ -100,8 +100,8 @@ public class java_lang_reflect_Field_get implements ExecutionContextMethod {
                         StringBuilder sb = new StringBuilder();
                         String modifiers = Modifier.toString(accessFlags);
                         sb.append("Class ").append(callingClassJava).append(" can not access a member of class ")
-                                        .append(definingClassJava).append(" with modifiers \"").append(modifiers)
-                                        .append("\"");
+                                .append(definingClassJava).append(" with modifiers \"").append(modifiers)
+                                .append("\"");
                         setException(new VirtualException(IllegalAccessException.class, sb.toString()));
                         return false;
                     }

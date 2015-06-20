@@ -1,14 +1,6 @@
 package org.cf.smalivm.opcode;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.context.ExecutionNode;
@@ -30,6 +22,10 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 @RunWith(Enclosed.class)
 public class TestFilledNewArray {
@@ -60,9 +56,9 @@ public class TestFilledNewArray {
             VirtualMachine vm = mock(VirtualMachine.class);
             opFactory = new OpFactory(vm);
             instruction = mock(
-                            BuilderInstruction.class,
-                            withSettings().extraInterfaces(Instruction35c.class, VariableRegisterInstruction.class,
-                                            ReferenceInstruction.class));
+                    BuilderInstruction.class,
+                    withSettings().extraInterfaces(Instruction35c.class, VariableRegisterInstruction.class,
+                            ReferenceInstruction.class));
             when(((Instruction35c) instruction).getRegisterC()).thenReturn(REGISTER_C);
             when(((Instruction35c) instruction).getRegisterD()).thenReturn(REGISTER_D);
             when(((Instruction35c) instruction).getRegisterE()).thenReturn(REGISTER_E);
@@ -96,32 +92,32 @@ public class TestFilledNewArray {
             when(instruction.getOpcode()).thenReturn(Opcode.FILLED_NEW_ARRAY);
             when(((VariableRegisterInstruction) instruction).getRegisterCount()).thenReturn(values.length);
             switch (values.length) {
-            case 5:
-                when(itemG.getValue()).thenReturn(values[4]);
-            case 4:
-                when(itemF.getValue()).thenReturn(values[3]);
-            case 3:
-                when(itemE.getValue()).thenReturn(values[2]);
-            case 2:
-                when(itemD.getValue()).thenReturn(values[1]);
-            case 1:
-                when(itemC.getValue()).thenReturn(values[0]);
+                case 5:
+                    when(itemG.getValue()).thenReturn(values[4]);
+                case 4:
+                    when(itemF.getValue()).thenReturn(values[3]);
+                case 3:
+                    when(itemE.getValue()).thenReturn(values[2]);
+                case 2:
+                    when(itemD.getValue()).thenReturn(values[1]);
+                case 1:
+                    when(itemC.getValue()).thenReturn(values[0]);
             }
 
             op = (FilledNewArrayOp) opFactory.create(instruction, ADDRESS);
             op.execute(node, mState);
 
             switch (values.length) {
-            case 5:
-                verify(mState, times(1)).readRegister(eq(REGISTER_G));
-            case 4:
-                verify(mState, times(1)).readRegister(eq(REGISTER_F));
-            case 3:
-                verify(mState, times(1)).readRegister(eq(REGISTER_E));
-            case 2:
-                verify(mState, times(1)).readRegister(eq(REGISTER_D));
-            case 1:
-                verify(mState, times(1)).readRegister(eq(REGISTER_C));
+                case 5:
+                    verify(mState, times(1)).readRegister(eq(REGISTER_G));
+                case 4:
+                    verify(mState, times(1)).readRegister(eq(REGISTER_F));
+                case 3:
+                    verify(mState, times(1)).readRegister(eq(REGISTER_E));
+                case 2:
+                    verify(mState, times(1)).readRegister(eq(REGISTER_D));
+                case 1:
+                    verify(mState, times(1)).readRegister(eq(REGISTER_C));
             }
 
             int[] expected = new int[values.length];
@@ -203,9 +199,9 @@ public class TestFilledNewArray {
             VirtualMachine vm = mock(VirtualMachine.class);
             opFactory = new OpFactory(vm);
             instruction = mock(
-                            BuilderInstruction.class,
-                            withSettings().extraInterfaces(Instruction3rc.class, VariableRegisterInstruction.class,
-                                            ReferenceInstruction.class, RegisterRangeInstruction.class));
+                    BuilderInstruction.class,
+                    withSettings().extraInterfaces(Instruction3rc.class, VariableRegisterInstruction.class,
+                            ReferenceInstruction.class, RegisterRangeInstruction.class));
 
             Reference ref = new ImmutableTypeReference("[I");
             when(((ReferenceInstruction) instruction).getReference()).thenReturn(ref);
@@ -275,9 +271,9 @@ public class TestFilledNewArray {
 
         @Test
         public void testIntegerParametersCreatesArrayWithExpectedContents() {
-            int[] elements = new int[] { 2, 3, 5 };
+            int[] elements = new int[]{2, 3, 5};
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, elements[0], "I", 1, elements[1], "I", 2,
-                            elements[2], "I");
+                    elements[2], "I");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(MethodState.ResultRegister, elements, "[I");
 
             VMTester.testMethodState(CLASS_NAME, METHOD_NAME, initial, expected);
@@ -285,9 +281,9 @@ public class TestFilledNewArray {
 
         @Test
         public void testNewArrayRangeWithIntegerParametersCreatesArrayWithExpectedContents() {
-            int[] elements = new int[] { 2, 3, 5, 7, 11, 13 };
+            int[] elements = new int[]{2, 3, 5, 7, 11, 13};
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, elements[0], "I", 1, elements[1], "I", 2,
-                            elements[2], "I", 3, elements[3], "I", 4, elements[4], "I", 5, elements[5], "I");
+                    elements[2], "I", 3, elements[3], "I", 4, elements[4], "I", 5, elements[5], "I");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(MethodState.ResultRegister, elements, "[I");
 
             VMTester.testMethodState(CLASS_NAME, "TestFilledNewArrayRange()V", initial, expected);
@@ -295,12 +291,12 @@ public class TestFilledNewArray {
 
         @Test
         public void testShortParametersCreatesArrayWithExpectedContents() {
-            Short[] elements = new Short[] { 2, 3, 5 };
-            int[] intElements = new int[] { 2, 3, 5 };
+            Short[] elements = new Short[]{2, 3, 5};
+            int[] intElements = new int[]{2, 3, 5};
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, elements[0], "S", 1, elements[1], "S", 2,
-                            elements[2], "S");
+                    elements[2], "S");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(MethodState.ResultRegister, intElements,
-                            "[I");
+                    "[I");
 
             VMTester.testMethodState(CLASS_NAME, METHOD_NAME, initial, expected);
         }
@@ -308,9 +304,9 @@ public class TestFilledNewArray {
         @Test
         public void testUnknownElementParameterReturnsUnknownValueOfIntegerArrayType() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, 2, "I", 1, 3, "I", 2, new UnknownValue(),
-                            "I");
+                    "I");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(MethodState.ResultRegister,
-                            new UnknownValue(), "[I");
+                    new UnknownValue(), "[I");
 
             VMTester.testMethodState(CLASS_NAME, METHOD_NAME, initial, expected);
         }

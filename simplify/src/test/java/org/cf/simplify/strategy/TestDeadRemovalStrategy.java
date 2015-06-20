@@ -1,10 +1,8 @@
 package org.cf.simplify.strategy;
 
-import static org.junit.Assert.assertEquals;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.simplify.MethodBackedGraph;
 import org.cf.simplify.OptimizerTester;
 import org.cf.smalivm.VMTester;
@@ -14,6 +12,8 @@ import org.jf.dexlib2.builder.BuilderInstruction;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestDeadRemovalStrategy {
 
@@ -38,7 +38,7 @@ public class TestDeadRemovalStrategy {
         DeadRemovalStrategy strategy = new DeadRemovalStrategy(mbgraph);
         TIntList found = strategy.getDeadAddresses();
         found.sort();
-        TIntList expected = new TIntArrayList(new int[] { 2 });
+        TIntList expected = new TIntArrayList(new int[]{2});
 
         assertEquals(expected, found);
     }
@@ -49,7 +49,7 @@ public class TestDeadRemovalStrategy {
         MethodBackedGraph mbgraph = OptimizerTester.getMethodBackedGraph(CLASS_NAME, methodName);
         DeadRemovalStrategy strategy = new DeadRemovalStrategy(mbgraph);
         TIntList found = strategy.getDeadAssignmentAddresses();
-        TIntList expected = new TIntArrayList(new int[] { 0 });
+        TIntList expected = new TIntArrayList(new int[]{0});
 
         assertEquals(expected, found);
     }
@@ -60,7 +60,7 @@ public class TestDeadRemovalStrategy {
         MethodBackedGraph mbgraph = OptimizerTester.getMethodBackedGraph(CLASS_NAME, methodName);
         DeadRemovalStrategy strategy = new DeadRemovalStrategy(mbgraph);
         TIntList found = strategy.getDeadResultAddresses();
-        TIntList expected = new TIntArrayList(new int[] { 1 });
+        TIntList expected = new TIntArrayList(new int[]{1});
 
         assertEquals(expected, found);
     }
@@ -71,7 +71,7 @@ public class TestDeadRemovalStrategy {
         MethodBackedGraph mbgraph = OptimizerTester.getMethodBackedGraph(CLASS_NAME, methodName);
         DeadRemovalStrategy strategy = new DeadRemovalStrategy(mbgraph);
         TIntList found = strategy.getDeadAssignmentAddresses();
-        TIntList expected = new TIntArrayList(new int[] {});
+        TIntList expected = new TIntArrayList(new int[]{});
 
         assertEquals(expected, found);
     }
@@ -82,7 +82,7 @@ public class TestDeadRemovalStrategy {
         MethodBackedGraph mbgraph = OptimizerTester.getMethodBackedGraph(CLASS_NAME, methodName);
         DeadRemovalStrategy strategy = new DeadRemovalStrategy(mbgraph);
         TIntList found = strategy.getUselessBranchAddresses();
-        TIntList expected = new TIntArrayList(new int[] { 0 });
+        TIntList expected = new TIntArrayList(new int[]{0});
 
         assertEquals(expected, found);
     }
@@ -93,7 +93,7 @@ public class TestDeadRemovalStrategy {
         MethodBackedGraph mbgraph = OptimizerTester.getMethodBackedGraph(CLASS_NAME, methodName);
         DeadRemovalStrategy strategy = new DeadRemovalStrategy(mbgraph);
         TIntList found = strategy.getDeadAssignmentAddresses();
-        TIntList expected = new TIntArrayList(new int[] { 0 });
+        TIntList expected = new TIntArrayList(new int[]{0});
 
         assertEquals(expected, found);
     }

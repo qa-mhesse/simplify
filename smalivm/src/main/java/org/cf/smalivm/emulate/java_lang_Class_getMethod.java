@@ -1,12 +1,7 @@
 package org.cf.smalivm.emulate;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.ClassManager;
+import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.context.HeapItem;
@@ -19,6 +14,11 @@ import org.cf.util.SmaliClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
+
 public class java_lang_Class_getMethod implements MethodStateMethod {
 
     private static final Logger log = LoggerFactory.getLogger(java_lang_Class_getMethod.class.getSimpleName());
@@ -28,58 +28,11 @@ public class java_lang_Class_getMethod implements MethodStateMethod {
     private final Set<VirtualException> exceptions;
 
     java_lang_Class_getMethod() {
-        exceptions = new HashSet<VirtualException>();
-    }
-
-    @Override
-    public Set<VirtualException> getExceptions() {
-        return exceptions;
-    }
-
-    @Override
-    public void execute(VirtualMachine vm, MethodState mState) throws Exception {
-        HeapItem classItem = mState.peekParameter(0);
-        Object classValue = classItem.getValue();
-        String methodName = (String) mState.peekParameter(1).getValue();
-        Object[] parameterTypesValue = (Object[]) mState.peekParameter(2).getValue();
-
-        Object methodValue = null;
-        if (classValue instanceof Class<?>) {
-            // It's a real class. Try and return a real method.
-            Class<?>[] parameterTypes = castToClassArray(parameterTypesValue);
-            try {
-                methodValue = getNonLocalMethod((Class<?>) classValue, methodName, parameterTypes);
-            } catch (NoSuchMethodException | SecurityException e) {
-                // Assuming Android doesn't have this method since our JVM doesn't.
-                setException(new VirtualException(e));
-                return;
-            }
-        } else if (classValue instanceof LocalClass) {
-            LocalClass localClass = (LocalClass) classValue;
-            methodValue = getLocalMethod(vm.getClassManager(), localClass, methodName, parameterTypesValue);
-            if (methodValue == null || "<init>".equals(methodName) || "<clinit>".equals(methodName)) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(SmaliClassUtils.smaliClassToJava(localClass.getName()));
-                sb.append('.').append(methodName).append("()");
-                setException(new VirtualException(NoSuchMethodException.class, sb.toString()));
-                return;
-            }
-        } else {
-            if (log.isErrorEnabled()) {
-                log.error("Class.getMethod with {} has unexpected type and confuses me.", classItem);
-            }
-            methodValue = new UnknownValue();
-        }
-
-        mState.assignReturnRegister(methodValue, RETURN_TYPE);
-    }
-
-    private void setException(VirtualException exception) {
-        exceptions.add(exception);
+        exceptions = new HashSet<>();
     }
 
     private static LocalMethod getLocalMethod(ClassManager classManager, LocalClass localClass, String methodName,
-                    Object[] parameterTypesValue) {
+                                              Object[] parameterTypesValue) {
         String className = localClass.getName();
         if (!classManager.isLocalClass(className)) {
             return null;
@@ -118,7 +71,7 @@ public class java_lang_Class_getMethod implements MethodStateMethod {
     }
 
     private static Method getNonLocalMethod(Class<?> klazz, String methodName, Class<?>[] parameterTypes)
-                    throws NoSuchMethodException, SecurityException {
+            throws NoSuchMethodException, SecurityException {
         return klazz.getMethod(methodName, parameterTypes);
     }
 
@@ -130,6 +83,53 @@ public class java_lang_Class_getMethod implements MethodStateMethod {
         }
 
         return classArray;
+    }
+
+    @Override
+    public Set<VirtualException> getExceptions() {
+        return exceptions;
+    }
+
+    @Override
+    public void execute(VirtualMachine vm, MethodState mState) throws Exception {
+        HeapItem classItem = mState.peekParameter(0);
+        Object classValue = classItem.getValue();
+        String methodName = (String) mState.peekParameter(1).getValue();
+        Object[] parameterTypesValue = (Object[]) mState.peekParameter(2).getValue();
+
+        Object methodValue;
+        if (classValue instanceof Class<?>) {
+            // It's a real class. Try and return a real method.
+            Class<?>[] parameterTypes = castToClassArray(parameterTypesValue);
+            try {
+                methodValue = getNonLocalMethod((Class<?>) classValue, methodName, parameterTypes);
+            } catch (NoSuchMethodException | SecurityException e) {
+                // Assuming Android doesn't have this method since our JVM doesn't.
+                setException(new VirtualException(e));
+                return;
+            }
+        } else if (classValue instanceof LocalClass) {
+            LocalClass localClass = (LocalClass) classValue;
+            methodValue = getLocalMethod(vm.getClassManager(), localClass, methodName, parameterTypesValue);
+            if (methodValue == null || "<init>".equals(methodName) || "<clinit>".equals(methodName)) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(SmaliClassUtils.smaliClassToJava(localClass.getName()));
+                sb.append('.').append(methodName).append("()");
+                setException(new VirtualException(NoSuchMethodException.class, sb.toString()));
+                return;
+            }
+        } else {
+            if (log.isErrorEnabled()) {
+                log.error("Class.getMethod with {} has unexpected type and confuses me.", classItem);
+            }
+            methodValue = new UnknownValue();
+        }
+
+        mState.assignReturnRegister(methodValue, RETURN_TYPE);
+    }
+
+    private void setException(VirtualException exception) {
+        exceptions.add(exception);
     }
 
     @Override

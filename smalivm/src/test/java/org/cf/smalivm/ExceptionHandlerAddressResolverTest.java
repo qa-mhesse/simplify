@@ -1,18 +1,16 @@
 package org.cf.smalivm;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.jf.dexlib2.builder.BuilderExceptionHandler;
 import org.jf.dexlib2.builder.BuilderTryBlock;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.stubbing.OngoingStubbing;
+
+import java.util.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ExceptionHandlerAddressResolverTest {
 
@@ -24,17 +22,6 @@ public class ExceptionHandlerAddressResolverTest {
     private List<BuilderTryBlock> tryBlocks;
     private ClassManager classManager;
     private VirtualException vex;
-
-    @Before
-    public void setUp() {
-        vex = mock(VirtualException.class);
-        tryBlocks = new LinkedList<BuilderTryBlock>();
-        classManager = mock(ClassManager.class);
-        when(classManager.getClassAncestors(EXCEPTION3)).thenReturn(new HashSet<String>(Arrays.asList(EXCEPTION2)));
-        when(classManager.getClassAncestors(EXCEPTION2)).thenReturn(new HashSet<String>(Arrays.asList(EXCEPTION1)));
-        when(classManager.getClassAncestors(EXCEPTION1)).thenReturn(new HashSet<String>());
-        when(classManager.getTryBlocks(METHOD)).thenReturn(tryBlocks);
-    }
 
     private static BuilderTryBlock buildTryBlock(int startAddress, int codeUnits, List handlers) {
         BuilderTryBlock tryBlock = mock(BuilderTryBlock.class);
@@ -53,6 +40,17 @@ public class ExceptionHandlerAddressResolverTest {
         return handler;
     }
 
+    @Before
+    public void setUp() {
+        vex = mock(VirtualException.class);
+        tryBlocks = new LinkedList<>();
+        classManager = mock(ClassManager.class);
+        when(classManager.getClassAncestors(EXCEPTION3)).thenReturn(new HashSet<>(Arrays.asList(EXCEPTION2)));
+        when(classManager.getClassAncestors(EXCEPTION2)).thenReturn(new HashSet<>(Arrays.asList(EXCEPTION1)));
+        when(classManager.getClassAncestors(EXCEPTION1)).thenReturn(new HashSet<String>())
+        when(classManager.getTryBlocks(METHOD)).thenReturn(tryBlocks);
+    }
+
     @Test
     public void testSimpleExceptionResolvedCorrectly() {
         int currentAddress = 1;
@@ -62,7 +60,7 @@ public class ExceptionHandlerAddressResolverTest {
 
         when(vex.getExceptionClass()).thenReturn(EXCEPTION1);
 
-        List handlers = new LinkedList<BuilderExceptionHandler>();
+        List handlers = new LinkedList<>();
         handlers.add(buildHandler(handlerCodeAddress, EXCEPTION1));
         tryBlocks.add(buildTryBlock(tryStartAddress, tryCodeUnits, handlers));
 
@@ -83,11 +81,11 @@ public class ExceptionHandlerAddressResolverTest {
 
         when(vex.getExceptionClass()).thenReturn(EXCEPTION1);
 
-        List handlers1 = new LinkedList<BuilderExceptionHandler>();
+        List handlers1 = new LinkedList<>();
         handlers1.add(buildHandler(handlerCodeAddress1, EXCEPTION1));
         tryBlocks.add(buildTryBlock(tryStartAddress1, tryCodeUnits, handlers1));
 
-        List handlers2 = new LinkedList<BuilderExceptionHandler>();
+        List handlers2 = new LinkedList<>();
         handlers2.add(buildHandler(handlerCodeAddress2, EXCEPTION2));
         tryBlocks.add(buildTryBlock(tryStartAddress2, tryCodeUnits, handlers2));
 
@@ -108,11 +106,11 @@ public class ExceptionHandlerAddressResolverTest {
 
         when(vex.getExceptionClass()).thenReturn(EXCEPTION3);
 
-        List handlers1 = new LinkedList<BuilderExceptionHandler>();
+        List handlers1 = new LinkedList<>();
         handlers1.add(buildHandler(handlerCodeAddress1, EXCEPTION1));
         tryBlocks.add(buildTryBlock(tryStartAddress1, tryCodeUnits, handlers1));
 
-        List handlers2 = new LinkedList<BuilderExceptionHandler>();
+        List handlers2 = new LinkedList<>();
         handlers2.add(buildHandler(handlerCodeAddress2, EXCEPTION2));
         tryBlocks.add(buildTryBlock(tryStartAddress2, tryCodeUnits, handlers2));
 

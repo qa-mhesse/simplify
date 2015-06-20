@@ -1,13 +1,6 @@
 package org.cf.smalivm.opcode;
 
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.VirtualMachine;
@@ -26,6 +19,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
+
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 @RunWith(Enclosed.class)
 public class TestBinaryMathOp {
@@ -61,7 +57,7 @@ public class TestBinaryMathOp {
             long expected = value1 / value2;
 
             instruction = mock(BuilderInstruction.class,
-                            withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction23x.class));
+                    withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction23x.class));
             when(instruction.getOpcode()).thenReturn(Opcode.DIV_LONG);
             when(((Instruction23x) instruction).getRegisterA()).thenReturn(DEST_REGISTER);
             when(((Instruction23x) instruction).getRegisterB()).thenReturn(ARG1_REGISTER);
@@ -83,7 +79,7 @@ public class TestBinaryMathOp {
             float expected = value1 / value2;
 
             instruction = mock(BuilderInstruction.class,
-                            withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction12x.class));
+                    withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction12x.class));
             when(instruction.getOpcode()).thenReturn(Opcode.DIV_FLOAT);
             when(((Instruction12x) instruction).getRegisterA()).thenReturn(ARG1_REGISTER);
             when(((Instruction12x) instruction).getRegisterB()).thenReturn(ARG2_REGISTER);
@@ -104,7 +100,7 @@ public class TestBinaryMathOp {
             int expected = value1 / value2;
 
             instruction = mock(BuilderInstruction.class,
-                            withSettings().extraInterfaces(NarrowLiteralInstruction.class, Instruction22s.class));
+                    withSettings().extraInterfaces(NarrowLiteralInstruction.class, Instruction22s.class));
             when(instruction.getOpcode()).thenReturn(Opcode.DIV_INT);
             when(((Instruction22s) instruction).getRegisterA()).thenReturn(DEST_REGISTER);
             when(((Instruction22s) instruction).getRegisterB()).thenReturn(ARG1_REGISTER);
@@ -126,7 +122,7 @@ public class TestBinaryMathOp {
             double expected = value1 / value2;
 
             instruction = mock(BuilderInstruction.class,
-                            withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction12x.class));
+                    withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction12x.class));
             when(instruction.getOpcode()).thenReturn(Opcode.DIV_DOUBLE);
             when(((Instruction12x) instruction).getRegisterA()).thenReturn(ARG1_REGISTER);
             when(((Instruction12x) instruction).getRegisterB()).thenReturn(ARG2_REGISTER);
@@ -147,7 +143,7 @@ public class TestBinaryMathOp {
             int value2 = 0;
 
             instruction = mock(BuilderInstruction.class,
-                            withSettings().extraInterfaces(NarrowLiteralInstruction.class, Instruction22s.class));
+                    withSettings().extraInterfaces(NarrowLiteralInstruction.class, Instruction22s.class));
             when(instruction.getOpcode()).thenReturn(Opcode.DIV_INT_LIT16);
             when(((Instruction22s) instruction).getRegisterA()).thenReturn(DEST_REGISTER);
             when(((Instruction22s) instruction).getRegisterB()).thenReturn(ARG1_REGISTER);
@@ -168,7 +164,7 @@ public class TestBinaryMathOp {
             int value2 = 0;
 
             instruction = mock(BuilderInstruction.class,
-                            withSettings().extraInterfaces(NarrowLiteralInstruction.class, Instruction22s.class));
+                    withSettings().extraInterfaces(NarrowLiteralInstruction.class, Instruction22s.class));
             when(instruction.getOpcode()).thenReturn(Opcode.REM_INT_LIT16);
             when(((Instruction22s) instruction).getRegisterA()).thenReturn(DEST_REGISTER);
             when(((Instruction22s) instruction).getRegisterB()).thenReturn(ARG1_REGISTER);
@@ -189,7 +185,7 @@ public class TestBinaryMathOp {
             long value2 = 0L;
 
             instruction = mock(BuilderInstruction.class,
-                            withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction23x.class));
+                    withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction23x.class));
             when(instruction.getOpcode()).thenReturn(Opcode.DIV_LONG);
             when(((Instruction23x) instruction).getRegisterA()).thenReturn(DEST_REGISTER);
             when(((Instruction23x) instruction).getRegisterB()).thenReturn(ARG1_REGISTER);
@@ -211,7 +207,7 @@ public class TestBinaryMathOp {
             long value2 = 0L;
 
             instruction = mock(BuilderInstruction.class,
-                            withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction23x.class));
+                    withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction23x.class));
             when(instruction.getOpcode()).thenReturn(Opcode.REM_LONG);
             when(((Instruction23x) instruction).getRegisterA()).thenReturn(DEST_REGISTER);
             when(((Instruction23x) instruction).getRegisterB()).thenReturn(ARG1_REGISTER);
@@ -267,7 +263,7 @@ public class TestBinaryMathOp {
         public void testDivDoubleWithDivisionByZero() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, 5D, "D", 1, 0D, "D");
             // Floats and doubles do not throw exceptions for div0
-            int[] expected = new int[] { 0, 2 };
+            int[] expected = new int[]{0, 2};
 
             VMTester.testVisitation(CLASS_NAME, "DivDoubleWithCatch()V", initial, expected);
         }
@@ -359,7 +355,7 @@ public class TestBinaryMathOp {
         public void testDivFloatWithDivisionByZero() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, 5F, "F", 1, 0F, "F");
             // Floats and doubles do not throw exceptions for div0
-            int[] expected = new int[] { 0, 2 };
+            int[] expected = new int[]{0, 2};
 
             VMTester.testVisitation(CLASS_NAME, "DivFloatWithCatch()V", initial, expected);
         }
@@ -487,7 +483,7 @@ public class TestBinaryMathOp {
         @Test
         public void testAddIntAndUnknownCharAndByte() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new UnknownValue(), "C", 1,
-                            new UnknownValue(), "B");
+                    new UnknownValue(), "B");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, new UnknownValue(), "I");
 
             VMTester.testMethodState(CLASS_NAME, "AddInt()V", initial, expected);
@@ -566,7 +562,7 @@ public class TestBinaryMathOp {
         @Test
         public void testDivIntWithCatchWithUnkownValueVisitsExceptionHandler() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new UnknownValue(), "I", 1, 5, "I");
-            int[] expected = new int[] { 0, 2, 3, 4 };
+            int[] expected = new int[]{0, 2, 3, 4};
 
             VMTester.testVisitation(CLASS_NAME, "DivIntWithCatch()V", initial, expected);
         }
@@ -874,7 +870,7 @@ public class TestBinaryMathOp {
         @Test
         public void testDivLongWithCatchWithUnkownValueVisitsExceptionHandler() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, 5L, "J", 1, new UnknownValue(), "J");
-            int[] expected = new int[] { 0, 2, 3, 4 };
+            int[] expected = new int[]{0, 2, 3, 4};
 
             VMTester.testVisitation(CLASS_NAME, "DivLongWithCatch()V", initial, expected);
         }

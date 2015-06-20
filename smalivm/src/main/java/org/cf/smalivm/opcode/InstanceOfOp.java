@@ -16,6 +16,20 @@ import org.slf4j.LoggerFactory;
 public class InstanceOfOp extends MethodStateOp {
 
     private static final Logger log = LoggerFactory.getLogger(InstanceOfOp.class.getSimpleName());
+    private final String className;
+    private final int destRegister;
+    private final int arg1Register;
+    private final VirtualMachine vm;
+
+    InstanceOfOp(int address, String opName, int childAddress, int destRegister, int arg1Register, String className,
+                 VirtualMachine vm) {
+        super(address, opName, childAddress);
+
+        this.destRegister = destRegister;
+        this.arg1Register = arg1Register;
+        this.className = className;
+        this.vm = vm;
+    }
 
     static InstanceOfOp create(Instruction instruction, int address, VirtualMachine vm) {
         String opName = instruction.getOpcode().name;
@@ -28,21 +42,6 @@ public class InstanceOfOp extends MethodStateOp {
         String className = typeRef.getType();
 
         return new InstanceOfOp(address, opName, childAddress, destRegister, arg1Register, className, vm);
-    }
-
-    private final String className;
-    private final int destRegister;
-    private final int arg1Register;
-    private final VirtualMachine vm;
-
-    InstanceOfOp(int address, String opName, int childAddress, int destRegister, int arg1Register, String className,
-                    VirtualMachine vm) {
-        super(address, opName, childAddress);
-
-        this.destRegister = destRegister;
-        this.arg1Register = arg1Register;
-        this.className = className;
-        this.vm = vm;
     }
 
     @Override
@@ -75,10 +74,6 @@ public class InstanceOfOp extends MethodStateOp {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder(getName());
-        sb.append(" r").append(destRegister).append(", ").append(arg1Register).append(", ").append(className);
-
-        return sb.toString();
+        return getName() + " r" + destRegister + ", " + arg1Register + ", " + className;
     }
-
 }

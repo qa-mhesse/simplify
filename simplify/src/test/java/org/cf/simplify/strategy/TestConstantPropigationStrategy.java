@@ -1,12 +1,6 @@
 package org.cf.simplify.strategy;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.simplify.ConstantBuilder;
 import org.cf.simplify.MethodBackedGraph;
 import org.cf.simplify.OptimizerTester;
@@ -24,6 +18,10 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Mockito.*;
 
 @RunWith(Enclosed.class)
 public class TestConstantPropigationStrategy {
@@ -88,12 +86,12 @@ public class TestConstantPropigationStrategy {
             MethodBackedGraph graph = mock(MethodBackedGraph.class);
             ConstantBuilder builder = mock(ConstantBuilder.class);
             BuilderInstruction instruction = mock(BuilderInstruction.class,
-                            withSettings().extraInterfaces(OneRegisterInstruction.class));
+                    withSettings().extraInterfaces(OneRegisterInstruction.class));
 
             ConstantPropigationStrategy strategy = new ConstantPropigationStrategy(graph);
             strategy.setDependancies(builder);
 
-            when(graph.getAddresses()).thenReturn(new int[] { 1 });
+            when(graph.getAddresses()).thenReturn(new int[]{1});
             when(graph.getInstruction(1)).thenReturn(null).thenReturn(instruction);
             when(graph.wasAddressReached(1)).thenReturn(true);
             when(graph.getOp(1)).thenReturn(null);
@@ -148,7 +146,7 @@ public class TestConstantPropigationStrategy {
         @Test
         public void testAGetIsConstable() {
             String methodName = "ArrayGetFromV0AtV1ToV0()V";
-            MethodBackedGraph mbgraph = getOptimizedGraph(methodName, 0, new int[] { 0, 7 }, "[I", 1, 1, "I");
+            MethodBackedGraph mbgraph = getOptimizedGraph(methodName, 0, new int[]{0, 7}, "[I", 1, 1, "I");
             BuilderInstruction expected = ConstantBuilder.buildConstant(7, 0);
 
             testEquals(expected, mbgraph, 0);
@@ -180,8 +178,8 @@ public class TestConstantPropigationStrategy {
         @Test
         public void testAGetWithUnknownIndexDoesNotConstantize() {
             String methodName = "ArrayGetFromV0AtV1ToV0()V";
-            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new int[] { 0, 7 }, "[I", 1,
-                            new UnknownValue(), "I");
+            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new int[]{0, 7}, "[I", 1,
+                    new UnknownValue(), "I");
             MethodBackedGraph before = OptimizerTester.getMethodBackedGraph(CLASS_NAME, methodName, initial);
             MethodBackedGraph after = getOptimizedGraph(methodName, initial);
 

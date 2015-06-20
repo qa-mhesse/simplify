@@ -7,16 +7,6 @@ import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.context.ExecutionContext;
 import org.cf.smalivm.context.ExecutionGraph;
@@ -27,24 +17,41 @@ import org.cf.smalivm.opcode.OpFactory;
 import org.cf.smalivm.opcode.ReturnOp;
 import org.cf.smalivm.opcode.ReturnVoidOp;
 import org.cf.util.Utils;
-import org.jf.dexlib2.builder.BuilderInstruction;
-import org.jf.dexlib2.builder.BuilderTryBlock;
-import org.jf.dexlib2.builder.Label;
-import org.jf.dexlib2.builder.MethodLocation;
-import org.jf.dexlib2.builder.MutableMethodImplementation;
+import org.jf.dexlib2.builder.*;
 import org.jf.dexlib2.util.ReferenceUtil;
 import org.jf.dexlib2.writer.builder.BuilderMethod;
 import org.jf.dexlib2.writer.builder.DexBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+
 public class MethodBackedGraph extends ExecutionGraph {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(MethodBackedGraph.class.getSimpleName());
+    private final TIntObjectMap<BuilderInstruction> addressToInstruction;
+    private final DexBuilder dexBuilder;
+    private final MutableMethodImplementation implementation;
+    private final BuilderMethod method;
+    private final String methodDescriptor;
+    private final OpFactory opFactory;
+    private final VirtualMachine vm;
+
+    public MethodBackedGraph(ExecutionGraph graph, BuilderMethod method, VirtualMachine vm, DexBuilder dexBuilder) {
+        super(graph, true);
+
+        this.dexBuilder = dexBuilder;
+        this.method = method;
+        this.methodDescriptor = ReferenceUtil.getMethodDescriptor(method);
+        implementation = (MutableMethodImplementation) method.getImplementation();
+        addressToInstruction = buildAddressToInstruction(implementation.getInstructions());
+        this.vm = vm;
+        opFactory = new OpFactory(vm);
+    }
 
     private static TIntObjectMap<BuilderInstruction> buildAddressToInstruction(List<BuilderInstruction> instructions) {
-        TIntObjectMap<BuilderInstruction> result = new TIntObjectHashMap<BuilderInstruction>();
+        TIntObjectMap<BuilderInstruction> result = new TIntObjectHashMap<>();
         for (BuilderInstruction instruction : instructions) {
             int address = instruction.getLocation().getCodeAddress();
             result.put(address, instruction);
@@ -74,26 +81,6 @@ public class MethodBackedGraph extends ExecutionGraph {
         }
     }
 
-    private final TIntObjectMap<BuilderInstruction> addressToInstruction;
-    private final DexBuilder dexBuilder;
-    private final MutableMethodImplementation implementation;
-    private final BuilderMethod method;
-    private final String methodDescriptor;
-    private final OpFactory opFactory;
-    private final VirtualMachine vm;
-
-    public MethodBackedGraph(ExecutionGraph graph, BuilderMethod method, VirtualMachine vm, DexBuilder dexBuilder) {
-        super(graph, true);
-
-        this.dexBuilder = dexBuilder;
-        this.method = method;
-        this.methodDescriptor = ReferenceUtil.getMethodDescriptor(method);
-        implementation = (MutableMethodImplementation) method.getImplementation();
-        addressToInstruction = buildAddressToInstruction(implementation.getInstructions());
-        this.vm = vm;
-        opFactory = new OpFactory(vm);
-    }
-
     public TIntObjectMap<BuilderInstruction> getAddressToInstruction() {
         return addressToInstruction;
     }
@@ -115,7 +102,7 @@ public class MethodBackedGraph extends ExecutionGraph {
     }
 
     public void removeInstruction(int address) {
-        removeInstructions(new TIntArrayList(new int[] { address }));
+        removeInstructions(new TIntArrayList(new int[]{address}));
     }
 
     public void removeInstructions(TIntList addresses) {
@@ -183,7 +170,7 @@ public class MethodBackedGraph extends ExecutionGraph {
                 // fail because we just wiped out the labels and dexlib is like "wtf".
                 indexes.add(tryBlocks.indexOf(tryBlock));
 
-                List<Label> remove = new ArrayList<Label>();
+                List<Label> remove = new ArrayList<>();
                 remove.add(tryBlock.start);
                 remove.add(tryBlock.end);
                 remove.add(tryBlock.exceptionHandler.getHandler());
@@ -208,7 +195,7 @@ public class MethodBackedGraph extends ExecutionGraph {
             Set<Label> labelSet = moveFrom.getLocation().getLabels();
             if (0 < labelSet.size()) {
                 BuilderInstruction moveTo = implementation.getInstructions().get(index + 1);
-                List<Label> labels = new ArrayList<Label>(labelSet.size());
+                List<Label> labels = new ArrayList<>(labelSet.size());
                 for (Label label : labels) {
                     moveTo.getLocation().getLabels().add(label);
                 }
@@ -260,7 +247,7 @@ public class MethodBackedGraph extends ExecutionGraph {
         // Insert + shift nodes
         List<ExecutionNode> shiftedNodePile = addressToNodePile.get(address);
         shiftNodePileAddresses(address - 1, shift);
-        List<ExecutionNode> addedNodePile = new ArrayList<ExecutionNode>();
+        List<ExecutionNode> addedNodePile = new ArrayList<>();
         addressToNodePile.put(address, addedNodePile);
 
         // Create + execute new nodes, adjust parent-child relationships

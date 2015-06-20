@@ -1,11 +1,5 @@
 package org.cf.smalivm.emulate;
 
-import static org.junit.Assert.assertEquals;
-
-import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.VirtualMachine;
@@ -19,13 +13,19 @@ import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
+
 @RunWith(Enclosed.class)
 public class Test_java_lang_Class_getMethod {
 
     private static final String METHOD_TYPE = "Ljava/lang/reflect/Method;";
 
     private static MethodState getMethodState(VirtualMachine vm, Object klazz, String methodName,
-                    Class<?>[] parameterTypes) {
+                                              Class<?>[] parameterTypes) {
         ExecutionContext ectx = new ExecutionContext(vm, "Ljava/lang/Class;->getMethod()Ljava/lang/reflect/Method;");
         int registerCount = 3;
         MethodState mState = new MethodState(ectx, registerCount);
@@ -64,7 +64,7 @@ public class Test_java_lang_Class_getMethod {
 
         @Test
         public void testGetExistentMethodWithOneParameterTypesReturnsExpectedLocalMethod() throws Exception {
-            MethodState mState = getMethodState(vm, CLASS, "takesParameter", new Class<?>[] { int.class });
+            MethodState mState = getMethodState(vm, CLASS, "takesParameter", new Class<?>[]{int.class});
             emulatedMethod.execute(vm, mState);
 
             LocalMethod expectedValue = new LocalMethod(CLASS_NAME + "->takesParameter(I)V");
@@ -114,10 +114,10 @@ public class Test_java_lang_Class_getMethod {
 
         @Test
         public void testGetExistentMethodWithOneParameterTypesReturnsExpectedLocalMethod() throws Exception {
-            MethodState mState = getMethodState(vm, CLASS, "getProperty", new Class<?>[] { String.class });
+            MethodState mState = getMethodState(vm, CLASS, "getProperty", new Class<?>[]{String.class});
             emulatedMethod.execute(vm, mState);
 
-            Method expectedValue = System.class.getMethod("getProperty", new Class<?>[] { String.class });
+            Method expectedValue = System.class.getMethod("getProperty", new Class<?>[]{String.class});
             HeapItem expected = new HeapItem(expectedValue, METHOD_TYPE);
             HeapItem actual = mState.readRegister(MethodState.ReturnRegister);
             assertEquals(expected, actual);

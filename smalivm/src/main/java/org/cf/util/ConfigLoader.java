@@ -1,10 +1,10 @@
 package org.cf.util;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
-
-import org.apache.commons.io.IOUtils;
 
 public class ConfigLoader {
 

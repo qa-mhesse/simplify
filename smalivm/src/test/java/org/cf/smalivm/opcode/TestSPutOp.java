@@ -1,12 +1,11 @@
 package org.cf.smalivm.opcode;
 
 import gnu.trove.map.TIntObjectMap;
-
-import java.util.Map;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.context.HeapItem;
 import org.junit.Test;
+
+import java.util.Map;
 
 public class TestSPutOp {
 
@@ -16,7 +15,7 @@ public class TestSPutOp {
     public void testStaticPutBoolean() {
         TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, true, "Z");
         Map<String, Map<String, HeapItem>> classNameToExpectedFieldValue = VMTester.buildClassNameToFieldItem(
-                        CLASS_NAME, "myBoolean:Z", true);
+                CLASS_NAME, "myBoolean:Z", true);
 
         VMTester.testClassState(CLASS_NAME, "TestStaticPutBoolean()V", initial, classNameToExpectedFieldValue);
     }
@@ -25,7 +24,7 @@ public class TestSPutOp {
     public void testStaticPutByte() {
         TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, (byte) 0xFF, "B");
         Map<String, Map<String, HeapItem>> classNameToExpectedFieldValue = VMTester.buildClassNameToFieldItem(
-                        CLASS_NAME, "myByte:B", (byte) 0xFF);
+                CLASS_NAME, "myByte:B", (byte) 0xFF);
 
         VMTester.testClassState(CLASS_NAME, "TestStaticPutByte()V", initial, classNameToExpectedFieldValue);
     }
@@ -34,7 +33,7 @@ public class TestSPutOp {
     public void testStaticPutChar() {
         TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, '!', "C");
         Map<String, Map<String, HeapItem>> classNameToExpectedFieldValue = VMTester.buildClassNameToFieldItem(
-                        CLASS_NAME, "myChar:C", '!');
+                CLASS_NAME, "myChar:C", '!');
 
         VMTester.testClassState(CLASS_NAME, "TestStaticPutChar()V", initial, classNameToExpectedFieldValue);
     }
@@ -43,7 +42,7 @@ public class TestSPutOp {
     public void testStaticPutInt() {
         TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, 0x42, "I");
         Map<String, Map<String, HeapItem>> classNameToExpectedFieldValue = VMTester.buildClassNameToFieldItem(
-                        CLASS_NAME, "myInt:I", 0x42);
+                CLASS_NAME, "myInt:I", 0x42);
 
         VMTester.testClassState(CLASS_NAME, "TestStaticPutInt()V", initial, classNameToExpectedFieldValue);
     }
@@ -51,9 +50,9 @@ public class TestSPutOp {
     @Test
     public void testStaticPutObject() {
         TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, "Do not pray for an easy life",
-                        "Ljava/lang/String;");
+                "Ljava/lang/String;");
         Map<String, Map<String, HeapItem>> classNameToExpectedFieldValue = VMTester.buildClassNameToFieldItem(
-                        CLASS_NAME, "myString:Ljava/lang/String;", "Do not pray for an easy life");
+                CLASS_NAME, "myString:Ljava/lang/String;", "Do not pray for an easy life");
 
         VMTester.testClassState(CLASS_NAME, "TestStaticPutObject()V", initial, classNameToExpectedFieldValue);
     }
@@ -62,7 +61,7 @@ public class TestSPutOp {
     public void testStaticPutShort() {
         TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, (short) 0x4242, "S");
         Map<String, Map<String, HeapItem>> classNameToExpectedFieldValue = VMTester.buildClassNameToFieldItem(
-                        CLASS_NAME, "myShort:S", (short) 0x4242);
+                CLASS_NAME, "myShort:S", (short) 0x4242);
 
         VMTester.testClassState(CLASS_NAME, "TestStaticPutShort()V", initial, classNameToExpectedFieldValue);
     }
@@ -71,7 +70,7 @@ public class TestSPutOp {
     public void testStaticPutWide() {
         TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, 0xFFFFFFFFFL, "J");
         Map<String, Map<String, HeapItem>> classNameToExpectedFieldValue = VMTester.buildClassNameToFieldItem(
-                        CLASS_NAME, "myLong:J", 0xFFFFFFFFFL);
+                CLASS_NAME, "myLong:J", 0xFFFFFFFFFL);
 
         VMTester.testClassState(CLASS_NAME, "TestStaticPutWide()V", initial, classNameToExpectedFieldValue);
     }

@@ -1,12 +1,6 @@
 package org.cf.smalivm.opcode;
 
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.smalivm.ClassManager;
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.VirtualException;
@@ -26,6 +20,9 @@ import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
+
 @RunWith(Enclosed.class)
 public class TestCheckCastOp {
 
@@ -36,17 +33,15 @@ public class TestCheckCastOp {
         @Test
         public void testStringWithStringTypeCastsToObject() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, "great maker", "Ljava/lang/String;");
-            TIntObjectMap<HeapItem> expected = initial;
 
-            VMTester.testMethodState(CLASS_NAME, "CheckCastIsObject()V", initial, expected);
+            VMTester.testMethodState(CLASS_NAME, "CheckCastIsObject()V", initial, initial);
         }
 
         @Test
         public void testStringWithObjectTypeCastsToString() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, "great maker", "Ljava/lang/Object;");
-            TIntObjectMap<HeapItem> expected = initial;
 
-            VMTester.testMethodState(CLASS_NAME, "CheckCastIsString()V", initial, expected);
+            VMTester.testMethodState(CLASS_NAME, "CheckCastIsString()V", initial, initial);
         }
     }
 
@@ -70,9 +65,9 @@ public class TestCheckCastOp {
             mState = mock(MethodState.class);
             node = mock(ExecutionNode.class);
             instruction = mock(
-                            BuilderInstruction.class,
-                            withSettings().extraInterfaces(OneRegisterInstruction.class, ReferenceInstruction.class,
-                                            Instruction21c.class));
+                    BuilderInstruction.class,
+                    withSettings().extraInterfaces(OneRegisterInstruction.class, ReferenceInstruction.class,
+                            Instruction21c.class));
             typeRef = mock(TypeReference.class);
             when(((ReferenceInstruction) instruction).getReference()).thenReturn(typeRef);
             when(instruction.getOpcode()).thenReturn(Opcode.CHECK_CAST);
@@ -108,7 +103,7 @@ public class TestCheckCastOp {
             op.execute(node, mState);
 
             VirtualException expectedException = new VirtualException(ClassCastException.class,
-                            "moneylol cannot be cast to lolmoney");
+                    "moneylol cannot be cast to lolmoney");
             VMTester.verifyExceptionHandling(expectedException, node, mState);
         }
     }

@@ -1,19 +1,15 @@
 package org.cf.smalivm.emulate;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.cf.smalivm.MethodReflector;
-import org.cf.smalivm.SideEffect;
-import org.cf.smalivm.ClassManager;
-import org.cf.smalivm.VirtualException;
-import org.cf.smalivm.VirtualMachine;
+import org.cf.smalivm.*;
 import org.cf.smalivm.context.ExecutionContext;
 import org.cf.smalivm.context.MethodState;
 import org.cf.smalivm.type.LocalClass;
 import org.cf.util.SmaliClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class java_lang_Class_forName implements ExecutionContextMethod {
 

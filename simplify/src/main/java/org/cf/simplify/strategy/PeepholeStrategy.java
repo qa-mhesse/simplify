@@ -2,10 +2,6 @@ package org.cf.simplify.strategy;
 
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import org.cf.simplify.ConstantBuilder;
 import org.cf.simplify.MethodBackedGraph;
 import org.cf.smalivm.context.HeapItem;
@@ -23,6 +19,9 @@ import org.jf.dexlib2.util.ReferenceUtil;
 import org.jf.dexlib2.writer.builder.BuilderTypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class PeepholeStrategy implements OptimizationStrategy {
 
@@ -42,7 +41,7 @@ public class PeepholeStrategy implements OptimizationStrategy {
 
     @Override
     public Map<String, Integer> getOptimizationCounts() {
-        Map<String, Integer> result = new HashMap<String, Integer>();
+        Map<String, Integer> result = new HashMap<>();
         result.put("peeps", peepCount);
 
         return result;
@@ -121,7 +120,7 @@ public class PeepholeStrategy implements OptimizationStrategy {
             int instanceRegister = instr.getRegisterC();
             HeapItem item = mbgraph.getRegisterConsensus(address, instanceRegister);
             BuilderInstruction replacement = ConstantBuilder.buildConstant(item.getValue(), item.getUnboxedValueType(),
-                            instanceRegister, mbgraph.getDexBuilder());
+                    instanceRegister, mbgraph.getDexBuilder());
             if (log.isDebugEnabled()) {
                 log.debug("Peeping string init @" + address + " " + mbgraph.getOp(address));
             }
@@ -152,9 +151,8 @@ public class PeepholeStrategy implements OptimizationStrategy {
             log.warn("Optimizing Class.forName of potentially non-existant class: " + smaliClassName);
         }
         BuilderTypeReference classRef = mbgraph.getDexBuilder().internTypeReference(smaliClassName);
-        BuilderInstruction constClassInstruction = new BuilderInstruction21c(Opcode.CONST_CLASS, register, classRef);
 
-        return constClassInstruction;
+        return new BuilderInstruction21c(Opcode.CONST_CLASS, register, classRef);
     }
 
     boolean canPeepClassForName(int address) {
@@ -166,18 +164,14 @@ public class PeepholeStrategy implements OptimizationStrategy {
         BuilderInstruction instruction = mbgraph.getInstruction(address);
         ReferenceInstruction instr = (ReferenceInstruction) instruction;
         String methodDescriptor = ReferenceUtil.getReferenceString(instr.getReference());
-        if (!methodDescriptor.equals(ClassForNameSignature)) {
+        if (methodDescriptor == null || !methodDescriptor.equals(ClassForNameSignature)) {
             return false;
         }
 
         int[] parameterRegisters = ((InvokeOp) op).getParameterRegisters();
         int registerA = parameterRegisters[0];
         HeapItem className = mbgraph.getRegisterConsensus(address, registerA);
-        if (className.isUnknown()) {
-            return false;
-        }
-
-        return true;
+        return !className.isUnknown();
     }
 
     TIntList getValidAddresses(MethodBackedGraph mbgraph) {
@@ -190,5 +184,4 @@ public class PeepholeStrategy implements OptimizationStrategy {
 
         return result;
     }
-
 }

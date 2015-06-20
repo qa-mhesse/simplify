@@ -1,12 +1,5 @@
 package org.cf.smalivm;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.commons.beanutils.ConstructorUtils;
 import org.apache.commons.beanutils.MethodUtils;
 import org.cf.smalivm.context.HeapItem;
@@ -17,14 +10,19 @@ import org.cf.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MethodReflector {
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-    private static Logger log = LoggerFactory.getLogger(MethodReflector.class.getSimpleName());
+public class MethodReflector {
 
     private static final String SAFE_CLASSES_PATH = "safe_classes.cfg";
     private static final String SAFE_METHODS_PATH = "safe_methods.cfg";
     private static final String UNSAFE_METHODS_PATH = "unsafe_methods.cfg";
-
+    private static Logger log = LoggerFactory.getLogger(MethodReflector.class.getSimpleName());
     private static Set<String> SafeClasses;
     private static Set<String> SafeMethods;
     private static Set<String> UnsafeMethods;
@@ -37,6 +35,27 @@ public class MethodReflector {
         } catch (Exception e) {
             log.warn("Error loading safe class definitions.", e);
         }
+    }
+
+    private final String smaliClassName;
+    private final String javaIshClassName;
+    private final boolean isStatic;
+    private final String methodDescriptor;
+    private final String methodName;
+    private final List<String> parameterTypes;
+    private final String returnType;
+
+    public MethodReflector(String methodDescriptor, String returnType, List<String> parameterTypes, boolean isStatic) {
+        this.methodDescriptor = methodDescriptor;
+        this.returnType = returnType;
+        this.parameterTypes = parameterTypes;
+        this.isStatic = isStatic;
+
+        String[] parts = methodDescriptor.split("->");
+        // ClassUtils expects "Ljava.lang.Class;"
+        smaliClassName = parts[0];
+        javaIshClassName = smaliClassName.replaceAll("/", ".");
+        methodName = parts[1].substring(0, parts[1].indexOf("("));
     }
 
     public static boolean canReflect(String typeDescriptor) {
@@ -64,38 +83,17 @@ public class MethodReflector {
     private static void loadSafeClasses() throws IOException {
         // Methods from safe classes must not have any side effects, e.g. any IO.
         List<String> lines = ConfigLoader.loadConfig(SAFE_CLASSES_PATH);
-        SafeClasses = new HashSet<String>(lines);
+        SafeClasses = new HashSet<>(lines);
     }
 
     private static void loadSafeMethods() throws IOException {
         List<String> lines = ConfigLoader.loadConfig(SAFE_METHODS_PATH);
-        SafeMethods = new HashSet<String>(lines);
+        SafeMethods = new HashSet<>(lines);
     }
 
     private static void loadUnsafeMethods() throws IOException {
         List<String> lines = ConfigLoader.loadConfig(UNSAFE_METHODS_PATH);
-        UnsafeMethods = new HashSet<String>(lines);
-    }
-
-    private final String smaliClassName;
-    private final String javaIshClassName;
-    private final boolean isStatic;
-    private final String methodDescriptor;
-    private final String methodName;
-    private final List<String> parameterTypes;
-    private final String returnType;
-
-    public MethodReflector(String methodDescriptor, String returnType, List<String> parameterTypes, boolean isStatic) {
-        this.methodDescriptor = methodDescriptor;
-        this.returnType = returnType;
-        this.parameterTypes = parameterTypes;
-        this.isStatic = isStatic;
-
-        String[] parts = methodDescriptor.split("->");
-        // ClassUtils expects "Ljava.lang.Class;"
-        smaliClassName = parts[0];
-        javaIshClassName = smaliClassName.replaceAll("/", ".");
-        methodName = parts[1].substring(0, parts[1].indexOf("("));
+        UnsafeMethods = new HashSet<>(lines);
     }
 
     public void reflect(MethodState calleeContext) {
@@ -103,7 +101,7 @@ public class MethodReflector {
             log.debug("Reflecting {} with context:\n{}", methodDescriptor, calleeContext);
         }
 
-        Object resultValue = null;
+        Object resultValue;
         try {
             // Class<?> clazz = ClassUtils.getClass(javaIshClassName, false);
             // Strip leading 'L' and trailing ';' from smali type descriptor
@@ -127,7 +125,7 @@ public class MethodReflector {
                     HeapItem targetItem = calleeContext.peekRegister(0);
                     if (log.isDebugEnabled()) {
                         log.debug("Reflecting {}, target={} args={}", methodDescriptor, targetItem,
-                                        Arrays.toString(args));
+                                Arrays.toString(args));
                     }
                     resultValue = MethodUtils.invokeMethod(targetItem.getValue(), methodName, args);
                 }

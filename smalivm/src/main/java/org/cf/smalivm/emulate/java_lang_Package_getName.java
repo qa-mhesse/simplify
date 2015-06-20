@@ -1,8 +1,5 @@
 package org.cf.smalivm.emulate;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.VirtualMachine;
@@ -12,6 +9,9 @@ import org.cf.smalivm.type.EmulatedType;
 import org.cf.smalivm.type.UnknownValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class java_lang_Package_getName implements MethodStateMethod {
 

@@ -13,11 +13,28 @@ import org.slf4j.LoggerFactory;
 
 public class IfOp extends MethodStateOp {
 
-    private static enum IfType {
-        EQUAL, GREATER, GREATOR_OR_EQUAL, LESS, LESS_OR_EQUAL, NOT_EQUAL
+    private static final Logger log = LoggerFactory.getLogger(IfOp.class.getSimpleName());
+    private final IfType ifType;
+    private final int register1;
+    private final int targetAddress;
+    private boolean compareToZero;
+    private int register2;
+
+    private IfOp(int address, String opName, int childAddress, IfType ifType, int targetAddress, int register1) {
+        super(address, opName, new int[]{childAddress, targetAddress});
+
+        this.ifType = ifType;
+        this.targetAddress = targetAddress;
+        this.register1 = register1;
+        compareToZero = true;
     }
 
-    private static final Logger log = LoggerFactory.getLogger(IfOp.class.getSimpleName());
+    private IfOp(int address, String opName, int childAddress, IfType ifType, int targetAddress, int register1,
+                 int register2) {
+        this(address, opName, childAddress, ifType, targetAddress, register1);
+        this.register2 = register2;
+        compareToZero = false;
+    }
 
     private static IfType getIfType(String opName) {
         IfType result = null;
@@ -41,24 +58,24 @@ public class IfOp extends MethodStateOp {
     private static boolean isTrue(IfType ifType, int cmp) {
         boolean isTrue = false;
         switch (ifType) {
-        case EQUAL:
-            isTrue = (cmp == 0);
-            break;
-        case GREATER:
-            isTrue = (cmp == 1);
-            break;
-        case GREATOR_OR_EQUAL:
-            isTrue = (cmp >= 0);
-            break;
-        case LESS:
-            isTrue = (cmp == -1);
-            break;
-        case LESS_OR_EQUAL:
-            isTrue = (cmp <= 0);
-            break;
-        case NOT_EQUAL:
-            isTrue = (cmp != 0);
-            break;
+            case EQUAL:
+                isTrue = (cmp == 0);
+                break;
+            case GREATER:
+                isTrue = (cmp == 1);
+                break;
+            case GREATOR_OR_EQUAL:
+                isTrue = (cmp >= 0);
+                break;
+            case LESS:
+                isTrue = (cmp == -1);
+                break;
+            case LESS_OR_EQUAL:
+                isTrue = (cmp <= 0);
+                break;
+            case NOT_EQUAL:
+                isTrue = (cmp != 0);
+                break;
         }
 
         return isTrue;
@@ -82,30 +99,6 @@ public class IfOp extends MethodStateOp {
             // if-*z vA, vB, :label (Instruction 21t)
             return new IfOp(address, opName, childAddress, ifType, targetAddress, register1);
         }
-    }
-
-    private boolean compareToZero;
-    private final IfType ifType;
-
-    private final int register1;
-    private int register2;
-
-    private final int targetAddress;
-
-    private IfOp(int address, String opName, int childAddress, IfType ifType, int targetAddress, int register1) {
-        super(address, opName, new int[] { childAddress, targetAddress });
-
-        this.ifType = ifType;
-        this.targetAddress = targetAddress;
-        this.register1 = register1;
-        compareToZero = true;
-    }
-
-    private IfOp(int address, String opName, int childAddress, IfType ifType, int targetAddress, int register1,
-                    int register2) {
-        this(address, opName, childAddress, ifType, targetAddress, register1);
-        this.register2 = register2;
-        compareToZero = false;
     }
 
     @Override
@@ -161,6 +154,10 @@ public class IfOp extends MethodStateOp {
         sb.append(", #").append(targetAddress);
 
         return sb.toString();
+    }
+
+    private static enum IfType {
+        EQUAL, GREATER, GREATOR_OR_EQUAL, LESS, LESS_OR_EQUAL, NOT_EQUAL
     }
 
 }

@@ -1,7 +1,6 @@
 package org.cf.smalivm.opcode;
 
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.context.HeapItem;
 import org.cf.smalivm.type.UnknownValue;
@@ -20,21 +19,21 @@ public class TestSwitchOp {
         @Test
         public void testKnownPredicateVisitsExpectedLabel() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, 1, "I");
-            int[] expected = new int[] { 0, 1, 5, 8 };
+            int[] expected = new int[]{0, 1, 5, 8};
             VMTester.testVisitation(CLASS_NAME, METHOD_NAME, initial, expected);
         }
 
         @Test
         public void testUnhandledPredicateVisitsNextOp() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, 100, "I");
-            int[] expected = new int[] { 0, 1, 4, 8 };
+            int[] expected = new int[]{0, 1, 4, 8};
             VMTester.testVisitation(CLASS_NAME, METHOD_NAME, initial, expected);
         }
 
         @Test
         public void testUnknownPredicateVisitsAllLabelsAndNextOp() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new UnknownValue(), "I");
-            int[] expected = new int[] { 0, 1, 4, 5, 6, 7, 8 };
+            int[] expected = new int[]{0, 1, 4, 5, 6, 7, 8};
             VMTester.testVisitation(CLASS_NAME, METHOD_NAME, initial, expected);
         }
     }
@@ -45,21 +44,21 @@ public class TestSwitchOp {
         @Test
         public void testKnownPredicateVisitsExpectedLabel() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, 1, "I");
-            int[] expected = new int[] { 0, 1, 5, 8 };
+            int[] expected = new int[]{0, 1, 5, 8};
             VMTester.testVisitation(CLASS_NAME, METHOD_NAME, initial, expected);
         }
 
         @Test
         public void testUnhandledPredicateVisitsNextOp() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, 100, "I");
-            int[] expected = new int[] { 0, 1, 4, 8 };
+            int[] expected = new int[]{0, 1, 4, 8};
             VMTester.testVisitation(CLASS_NAME, METHOD_NAME, initial, expected);
         }
 
         @Test
         public void testUnknownPredicateVisitsAllLabelsAndNextOp() {
             TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new UnknownValue(), "I");
-            int[] expected = new int[] { 0, 1, 4, 5, 6, 8 };
+            int[] expected = new int[]{0, 1, 4, 5, 6, 8};
             VMTester.testVisitation(CLASS_NAME, METHOD_NAME, initial, expected);
         }
     }

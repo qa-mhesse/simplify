@@ -1,17 +1,5 @@
 package org.cf.smalivm;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Modifier;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.cf.smalivm.exception.UnknownAncestors;
 import org.cf.util.Dexifier;
 import org.cf.util.SmaliClassUtils;
@@ -20,19 +8,20 @@ import org.cf.util.Utils;
 import org.jf.dexlib2.builder.BuilderTryBlock;
 import org.jf.dexlib2.builder.MutableMethodImplementation;
 import org.jf.dexlib2.util.ReferenceUtil;
-import org.jf.dexlib2.writer.builder.BuilderClassDef;
-import org.jf.dexlib2.writer.builder.BuilderField;
-import org.jf.dexlib2.writer.builder.BuilderMethod;
-import org.jf.dexlib2.writer.builder.BuilderMethodParameter;
-import org.jf.dexlib2.writer.builder.DexBuilder;
+import org.jf.dexlib2.writer.builder.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Modifier;
+import java.util.*;
 
 /**
  * The class manager is responsible for loading Smali files into Dexlib2 objects and making them available.
  *
  * @author cfenton
- *
  */
 public class ClassManager {
 
@@ -51,9 +40,7 @@ public class ClassManager {
     private final SmaliFileFactory smaliFileFactory;
 
     /**
-     *
-     * @param smaliPath
-     *            Path to Smali file or folder
+     * @param smaliPath  Path to Smali file or folder
      * @param dexBuilder
      * @throws IOException
      */
@@ -73,9 +60,7 @@ public class ClassManager {
     }
 
     /**
-     *
-     * @param smaliPath
-     *            Path to Smali file or folder
+     * @param smaliPath Path to Smali file or folder
      * @throws IOException
      */
     public ClassManager(String smaliPath) throws IOException {
@@ -83,9 +68,7 @@ public class ClassManager {
     }
 
     /**
-     *
-     * @param smaliPath
-     *            Path to Smali file or folder
+     * @param smaliPath  Path to Smali file or folder
      * @param dexBuilder
      * @throws IOException
      */
@@ -96,8 +79,7 @@ public class ClassManager {
     /**
      * Loads the class if it has not been loaded.
      *
-     * @param className
-     *            Fully qualified Smali class descriptor
+     * @param className Fully qualified Smali class descriptor
      * @return class definition for the given class name
      */
     public BuilderClassDef getClass(String className) {
@@ -116,7 +98,6 @@ public class ClassManager {
     }
 
     /**
-     *
      * @param className
      * @return field and type (e.g. myBool:Z) for given class, including inherited fields
      */
@@ -134,7 +115,6 @@ public class ClassManager {
     }
 
     /**
-     *
      * @param className
      * @return fields for given class
      */
@@ -159,7 +139,6 @@ public class ClassManager {
     }
 
     /**
-     *
      * @param methodDescriptor
      * @return BuilderMethod for methodDescriptor, or null if not found
      */
@@ -170,7 +149,6 @@ public class ClassManager {
     }
 
     /**
-     *
      * @param className
      * @param methodSignature
      * @return BuilderMethod for className and methodSignature, or null if not found
@@ -183,7 +161,6 @@ public class ClassManager {
     }
 
     /**
-     *
      * @param className
      * @return set of all method descriptors for given className
      */
@@ -217,7 +194,6 @@ public class ClassManager {
     }
 
     /**
-     *
      * @param methodDescriptor
      * @return list of Smali style parameter types
      */
@@ -228,7 +204,6 @@ public class ClassManager {
     }
 
     /**
-     *
      * @param methodDescriptor
      * @return try / catch blocks of given method
      */
@@ -276,7 +251,6 @@ public class ClassManager {
     }
 
     /**
-     *
      * @param className
      * @return true if the Smali file for the className was available at runtime
      */
@@ -285,7 +259,6 @@ public class ClassManager {
     }
 
     /**
-     *
      * @param methodDescriptor
      * @return true if {@link=isLocalClass} is true, and method is defined for class
      */
@@ -300,7 +273,6 @@ public class ClassManager {
     }
 
     /**
-     *
      * @param methodDescriptor
      * @return true if method is native, false otherwise
      */
@@ -317,7 +289,6 @@ public class ClassManager {
     }
 
     /**
-     *
      * @param methodDescriptor
      * @return true if method has implementation (not abstract or native), false otherwise
      */
@@ -388,7 +359,7 @@ public class ClassManager {
             boolean isFramework = smaliFileFactory.isFrameworkClass(className);
             InputStream is = smaliFile.open();
             classDef = Dexifier
-                            .dexifySmaliFile(smaliFile.getPath(), is, isFramework ? frameworkDexBuilder : dexBuilder);
+                    .dexifySmaliFile(smaliFile.getPath(), is, isFramework ? frameworkDexBuilder : dexBuilder);
             is.close();
         } catch (Exception e) {
             if (log.isErrorEnabled()) {

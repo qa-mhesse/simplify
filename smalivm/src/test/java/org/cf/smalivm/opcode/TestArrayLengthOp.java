@@ -1,13 +1,6 @@
 package org.cf.smalivm.opcode;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 import gnu.trove.map.TIntObjectMap;
-
-import java.util.HashSet;
-import java.util.Set;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.VirtualMachine;
@@ -24,6 +17,11 @@ import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.mockito.Mockito.*;
+
 @RunWith(Enclosed.class)
 public class TestArrayLengthOp {
 
@@ -33,7 +31,7 @@ public class TestArrayLengthOp {
 
         @Test
         public void testArrayLengthForEmptyIntegerArray() {
-            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new Integer[] {}, "[I");
+            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new Integer[]{}, "[I");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, 0, "I");
 
             VMTester.testMethodState(CLASS_NAME, "ArrayLength()V", initial, expected);
@@ -41,7 +39,7 @@ public class TestArrayLengthOp {
 
         @Test
         public void testArrayLengthForIntegerArray() {
-            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new Integer[] { 1, 2, 3 }, "[I");
+            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new Integer[]{1, 2, 3}, "[I");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, 3, "I");
 
             VMTester.testMethodState(CLASS_NAME, "ArrayLength()V", initial, expected);
@@ -49,8 +47,8 @@ public class TestArrayLengthOp {
 
         @Test
         public void testArrayLengthForStringArray() {
-            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new String[] { "isn't", "this", "where" },
-                            "[I");
+            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new String[]{"isn't", "this", "where"},
+                    "[I");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, 3, "I");
 
             VMTester.testMethodState(CLASS_NAME, "ArrayLength()V", initial, expected);
@@ -59,7 +57,7 @@ public class TestArrayLengthOp {
         @Test
         public void testArrayLengthForUnknownValueOfIntegerType() {
             TIntObjectMap<HeapItem> initial = VMTester
-                            .buildRegisterState(0, new UnknownValue(), "[Ljava/lang/Integer;");
+                    .buildRegisterState(0, new UnknownValue(), "[Ljava/lang/Integer;");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, new UnknownValue(), "I");
 
             VMTester.testMethodState(CLASS_NAME, "ArrayLength()V", initial, expected);
@@ -78,7 +76,7 @@ public class TestArrayLengthOp {
 
         @Test
         public void testArrayLengthForEmptyIntArray() {
-            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new int[] {}, "[I");
+            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new int[]{}, "[I");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, 0, "I");
 
             VMTester.testMethodState(CLASS_NAME, "ArrayLength()V", initial, expected);
@@ -86,7 +84,7 @@ public class TestArrayLengthOp {
 
         @Test
         public void testArrayLengthForIntArray() {
-            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new int[] { 1, 2, 3 }, "[I");
+            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new int[]{1, 2, 3}, "[I");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, 3, "I");
 
             VMTester.testMethodState(CLASS_NAME, "ArrayLength()V", initial, expected);
@@ -94,7 +92,7 @@ public class TestArrayLengthOp {
 
         @Test
         public void testArrayLengthForLongArray() {
-            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new long[] { 1, 2, 3, 4 }, "[J");
+            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new long[]{1, 2, 3, 4}, "[J");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, 4, "I");
 
             VMTester.testMethodState(CLASS_NAME, "ArrayLength()V", initial, expected);
@@ -102,7 +100,7 @@ public class TestArrayLengthOp {
 
         @Test
         public void testArrayLengthForShortArray() {
-            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new short[] { 1, 2 }, "[S");
+            TIntObjectMap<HeapItem> initial = VMTester.buildRegisterState(0, new short[]{1, 2}, "[S");
             TIntObjectMap<HeapItem> expected = VMTester.buildRegisterState(0, 2, "I");
 
             VMTester.testMethodState(CLASS_NAME, "ArrayLength()V", initial, expected);
@@ -128,7 +126,7 @@ public class TestArrayLengthOp {
             mState = mock(MethodState.class);
             node = mock(ExecutionNode.class);
             instruction = mock(BuilderInstruction.class,
-                            withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction12x.class));
+                    withSettings().extraInterfaces(TwoRegisterInstruction.class, Instruction12x.class));
             when(instruction.getOpcode()).thenReturn(Opcode.ARRAY_LENGTH);
             when(((Instruction12x) instruction).getRegisterA()).thenReturn(DEST_REGISTER);
             when(((Instruction12x) instruction).getRegisterB()).thenReturn(ARG1_REGISTER);
@@ -142,8 +140,8 @@ public class TestArrayLengthOp {
             op.execute(node, mState);
 
             VirtualException expectedException = new VirtualException(NullPointerException.class,
-                            "Attempt to get length of null array");
-            Set<VirtualException> expectedExceptions = new HashSet<VirtualException>();
+                    "Attempt to get length of null array");
+            Set<VirtualException> expectedExceptions = new HashSet<>();
             expectedExceptions.add(expectedException);
             VMTester.verifyExceptionHandling(expectedExceptions, node, mState);
         }

@@ -1,7 +1,6 @@
 package org.cf.smalivm.context;
 
 import gnu.trove.set.hash.THashSet;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +14,7 @@ public class ClassState extends BaseState {
     public ClassState(ExecutionContext ectx, String className, int fieldCount) {
         super(ectx, fieldCount);
 
-        fieldNameAndTypes = new THashSet<String>();
+        fieldNameAndTypes = new THashSet<>();
         this.className = className;
     }
 
@@ -29,7 +28,7 @@ public class ClassState extends BaseState {
     public ClassState(ClassState other, ExecutionContext ectx) {
         super(other, ectx);
 
-        fieldNameAndTypes = new THashSet<String>(other.fieldNameAndTypes);
+        fieldNameAndTypes = new THashSet<>(other.fieldNameAndTypes);
         className = other.className;
     }
 
@@ -73,6 +72,10 @@ public class ClassState extends BaseState {
         return fieldItem;
     }
 
+    public THashSet<String> getFieldNames() {
+        return fieldNameAndTypes;
+    }
+
     public void pokeField(String fieldNameAndType, Object value) {
         int register = 0;
         String heapKey = getKey(fieldNameAndType);
@@ -88,10 +91,7 @@ public class ClassState extends BaseState {
 
     private String getKey(String fieldNameAndType) {
         fieldNameAndTypes.add(fieldNameAndType);
-        StringBuilder sb = new StringBuilder(className);
-        sb.append("->").append(fieldNameAndType);
-
-        return sb.toString();
+        return className + "->" + fieldNameAndType;
     }
 
     @Override
@@ -107,9 +107,7 @@ public class ClassState extends BaseState {
     }
 
     ClassState getChild(ExecutionContext childContext) {
-        ClassState child = new ClassState(this, childContext, fieldNameAndTypes);
-
-        return child;
+        return new ClassState(this, childContext, fieldNameAndTypes);
     }
 
 }

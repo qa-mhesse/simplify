@@ -3,28 +3,18 @@ package org.cf.util;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
+import org.apache.commons.lang3.ClassUtils;
+import org.cf.smalivm.context.HeapItem;
+import org.cf.smalivm.type.*;
+import org.jf.dexlib2.writer.builder.BuilderTypeList;
+import org.jf.dexlib2.writer.builder.BuilderTypeReference;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.ClassUtils;
-import org.cf.smalivm.context.HeapItem;
-import org.cf.smalivm.type.LocalClass;
-import org.cf.smalivm.type.LocalField;
-import org.cf.smalivm.type.LocalInstance;
-import org.cf.smalivm.type.LocalMethod;
-import org.cf.smalivm.type.UnknownValue;
-import org.jf.dexlib2.writer.builder.BuilderTypeList;
-import org.jf.dexlib2.writer.builder.BuilderTypeReference;
 
 public class Utils {
 
@@ -54,7 +44,7 @@ public class Utils {
     }
 
     public static Object buildArray(String typeReference, int length, boolean useLocalClass)
-                    throws ClassNotFoundException {
+            throws ClassNotFoundException {
         String baseClassName = SmaliClassUtils.getBaseClass(typeReference);
         String javaClassName;
         if (useLocalClass) {

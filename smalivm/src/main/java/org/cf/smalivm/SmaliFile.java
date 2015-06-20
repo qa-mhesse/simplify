@@ -1,21 +1,14 @@
 package org.cf.smalivm;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+import java.io.*;
 import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class SmaliFile {
 
@@ -33,6 +26,44 @@ public class SmaliFile {
     public SmaliFile(String path, String className) {
         this.path = path;
         this.className = className;
+    }
+
+    private static ZipInputStream getReflibStream() {
+        InputStream is = SmaliFile.class.getClassLoader().getResourceAsStream("reflib.zip");
+
+        return new ZipInputStream(is);
+    }
+
+    private static String getClassName(BufferedInputStream inputStream) {
+        String className = null;
+        try {
+            InputStreamReader isr = new InputStreamReader(inputStream, "UTF-8");
+            BufferedReader br = new BufferedReader(isr);
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (!line.trim().startsWith(".class")) {
+                    continue;
+                }
+
+                break;
+            }
+            br.close();
+
+            if (null == line) {
+                throw new RuntimeException("Missing class directive.");
+            }
+
+            Matcher m = CLASS_PATTERN.matcher(line);
+            if (!m.find()) {
+                throw new RuntimeException("Strange class directive: " + line);
+            }
+            className = m.group(1);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+        return className;
     }
 
     @Override
@@ -73,16 +104,10 @@ public class SmaliFile {
         return isSafeFramework;
     }
 
-    private static ZipInputStream getReflibStream() {
-        InputStream is = SmaliFile.class.getClassLoader().getResourceAsStream("reflib.zip");
-
-        return new ZipInputStream(is);
-    }
-
     public InputStream open() throws URISyntaxException, IOException {
         if (isResource) {
             ZipInputStream zis = getReflibStream();
-            for (ZipEntry ze; (ze = zis.getNextEntry()) != null;) {
+            for (ZipEntry ze; (ze = zis.getNextEntry()) != null; ) {
                 if (ze.getName().equals(getPath())) {
                     return zis;
                 }
@@ -101,38 +126,6 @@ public class SmaliFile {
     @Override
     public String toString() {
         return path;
-    }
-
-    private static String getClassName(BufferedInputStream inputStream) {
-        String className = null;
-        try {
-            InputStreamReader isr = new InputStreamReader(inputStream, "UTF-8");
-            BufferedReader br = new BufferedReader(isr);
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (!line.trim().startsWith(".class")) {
-                    continue;
-                }
-
-                break;
-            }
-            br.close();
-
-            if (null == line) {
-                throw new RuntimeException("Missing class directive.");
-            }
-
-            Matcher m = CLASS_PATTERN.matcher(line);
-            if (!m.find()) {
-                throw new RuntimeException("Strange class directive: " + line);
-            }
-            className = m.group(1);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        }
-
-        return className;
     }
 
 }

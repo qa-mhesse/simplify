@@ -7,11 +7,11 @@ task myTestsJar(type: Jar) {
 }
 
 configurations {
-  testArtifacts
+    testArtifacts
 }
 
 artifacts {
-   testArtifacts myTestsJar
+    testArtifacts myTestsJar
 }
 
 dependencies {

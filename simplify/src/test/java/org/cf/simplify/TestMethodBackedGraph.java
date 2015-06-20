@@ -1,12 +1,6 @@
 package org.cf.simplify;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import gnu.trove.map.TIntObjectMap;
-
-import java.util.Arrays;
-import java.util.List;
-
 import org.cf.smalivm.context.ExecutionNode;
 import org.cf.smalivm.opcode.Op;
 import org.jf.dexlib2.Opcode;
@@ -15,6 +9,12 @@ import org.jf.dexlib2.builder.instruction.BuilderInstruction10x;
 import org.jf.dexlib2.builder.instruction.BuilderInstruction21s;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class TestMethodBackedGraph {
 
@@ -34,7 +34,7 @@ public class TestMethodBackedGraph {
         TIntObjectMap<BuilderInstruction> addressToInstruction = mbgraph.getAddressToInstruction();
         assertEquals(6, addressToInstruction.size());
 
-        int[] expectedAddresses = new int[] { 0, 1, 2, 3, 4, 5, };
+        int[] expectedAddresses = new int[]{0, 1, 2, 3, 4, 5,};
         int[] actualAddresses = mbgraph.getAddresses();
         Arrays.sort(actualAddresses);
         assertArrayEquals(expectedAddresses, actualAddresses);
@@ -43,7 +43,7 @@ public class TestMethodBackedGraph {
     @Test
     public void testHasEveryRegisterAvailableAtEveryAddress() {
         int[] addresses = mbgraph.getAddresses();
-        int[] expectedAvailable = new int[] { 0, 1, 2, 3, 4, 5, };
+        int[] expectedAvailable = new int[]{0, 1, 2, 3, 4, 5,};
         for (int address : addresses) {
             int[] actualAvailable = mbgraph.getAvailableRegisters(address).toArray();
             Arrays.sort(actualAvailable);
@@ -74,7 +74,7 @@ public class TestMethodBackedGraph {
                 int[] children = op.getChildren();
                 if (children.length > 0) {
                     int nextAddress = address + addressToInstruction.get(address).getCodeUnits();
-                    assertArrayEquals(new int[] { nextAddress }, children);
+                    assertArrayEquals(new int[]{nextAddress}, children);
                 }
             }
         }
@@ -103,7 +103,7 @@ public class TestMethodBackedGraph {
                 int[] children = op.getChildren();
                 if (children.length > 0) {
                     int nextAddress = address + addressToInstruction.get(address).getCodeUnits();
-                    assertArrayEquals(new int[] { nextAddress }, children);
+                    assertArrayEquals(new int[]{nextAddress}, children);
                 }
             }
         }
@@ -132,7 +132,7 @@ public class TestMethodBackedGraph {
                 int[] children = op.getChildren();
                 if (children.length > 0) {
                     int nextAddress = address + addressToInstruction.get(address).getCodeUnits();
-                    assertArrayEquals(new int[] { nextAddress, }, children);
+                    assertArrayEquals(new int[]{nextAddress,}, children);
                 }
             }
         }

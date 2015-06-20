@@ -3,9 +3,6 @@ package org.cf.smalivm.context;
 import gnu.trove.map.TMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
-
-import java.util.Set;
-
 import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.exception.MaxAddressVisitsExceeded;
@@ -14,6 +11,8 @@ import org.cf.smalivm.exception.MaxMethodVisitsExceeded;
 import org.cf.smalivm.exception.UnhandledVirtualException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Set;
 
 public class ExecutionContext {
 
@@ -89,6 +88,10 @@ public class ExecutionContext {
         return mState;
     }
 
+    public void setMethodState(MethodState mState) {
+        this.mState = mState;
+    }
+
     public void initializeClass(String className, ClassState cState, SideEffect.Level level) {
         setClassState(className, cState, level);
         setClassInitialized(className);
@@ -139,10 +142,6 @@ public class ExecutionContext {
     public void setClassState(String className, ClassState cState, SideEffect.Level level) {
         classNameToState.put(className, cState);
         classNameToSideEffectLevel.put(className, level);
-    }
-
-    public void setMethodState(MethodState mState) {
-        this.mState = mState;
     }
 
     public ExecutionContext spawnChild() {
@@ -234,6 +233,10 @@ public class ExecutionContext {
         initializedClasses.add(className);
     }
 
+    ExecutionContext getParent() {
+        return parent;
+    }
+
     private void setParent(ExecutionContext parent) {
         assert parent.getMethodState() != null;
 
@@ -243,10 +246,6 @@ public class ExecutionContext {
 
         MethodState childMethodState = parent.getMethodState().getChild(this);
         setMethodState(childMethodState);
-    }
-
-    ExecutionContext getParent() {
-        return parent;
     }
 
     void setClassSideEffectLevel(String className, SideEffect.Level sideEffectLevel) {

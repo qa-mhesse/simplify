@@ -1,16 +1,16 @@
 package org.cf.util;
 
+import org.apache.commons.io.FileUtils;
+import org.jf.dexlib2.util.ReferenceUtil;
+import org.jf.dexlib2.writer.builder.BuilderClassDef;
+import org.jf.dexlib2.writer.builder.DexBuilder;
+
 import java.io.File;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.apache.commons.io.FileUtils;
-import org.jf.dexlib2.util.ReferenceUtil;
-import org.jf.dexlib2.writer.builder.BuilderClassDef;
-import org.jf.dexlib2.writer.builder.DexBuilder;
 
 public class FrameworkCacheBuilder {
 
@@ -26,7 +26,7 @@ public class FrameworkCacheBuilder {
         List<File> resFiles = new LinkedList<File>();
         try {
             URL url = FrameworkCacheBuilder.class.getResource(resPath);
-            resFiles.addAll(FileUtils.listFiles(new File(url.toURI()), new String[] { "smali" }, true));
+            resFiles.addAll(FileUtils.listFiles(new File(url.toURI()), new String[]{"smali"}, true));
         } catch (URISyntaxException ex) {
         }
 

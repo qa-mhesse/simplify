@@ -16,47 +16,62 @@ import org.slf4j.LoggerFactory;
 
 public class BinaryMathOp extends MethodStateOp {
 
-    private static enum MathOperandType {
-        DOUBLE("D"), FLOAT("F"), INT("I"), LONG("J"), ;
+    private static final Logger log = LoggerFactory.getLogger(BinaryMathOp.class.getSimpleName());
+    private final int arg1Register;
 
-        private final String type;
+    ;
+    private final int destRegister;
+    ;
+    private final MathOperandType mathOperandType;
+    private final MathOperator mathOperator;
+    private int arg2Register;
+    private boolean hasLiteral;
+    private int narrowLiteral;
 
-        MathOperandType(String type) {
-            this.type = type;
-        }
+    private BinaryMathOp(int address, String opName, int childAddress, int destRegister, int arg1Register) {
+        super(address, opName, childAddress);
 
-        public String getType() {
-            return type;
-        }
+        this.destRegister = destRegister;
+        this.arg1Register = arg1Register;
+        mathOperator = getMathOp(opName);
+        mathOperandType = getMathOperandType(opName);
+
+        addException(new VirtualException(ArithmeticException.class, "/ by zero"));
     }
 
-    private static enum MathOperator {
-        ADD, AND, DIV, MUL, OR, REM, RSUB, SHL, SHR, SUB, USHR, XOR,
-    };
+    private BinaryMathOp(int address, String opName, int childAddress, int destRegister, int arg1Register,
+                         int otherValue, boolean hasLiteral) {
+        this(address, opName, childAddress, destRegister, arg1Register);
 
-    private static final Logger log = LoggerFactory.getLogger(BinaryMathOp.class.getSimpleName());;
+        this.hasLiteral = hasLiteral;
+        if (hasLiteral) {
+            narrowLiteral = otherValue;
+        } else {
+            arg2Register = otherValue;
+        }
+    }
 
     private static Object doDoubleOperation(MathOperator mathOperator, Double lhs, Double rhs) {
         Object result = null;
         try {
             switch (mathOperator) {
-            case ADD:
-                result = lhs + rhs;
-                break;
-            case DIV:
-                result = lhs / rhs;
-                break;
-            case MUL:
-                result = lhs * rhs;
-                break;
-            case REM:
-                result = lhs % rhs;
-                break;
-            case SUB:
-                result = lhs - rhs;
-                break;
-            default:
-                break;
+                case ADD:
+                    result = lhs + rhs;
+                    break;
+                case DIV:
+                    result = lhs / rhs;
+                    break;
+                case MUL:
+                    result = lhs * rhs;
+                    break;
+                case REM:
+                    result = lhs % rhs;
+                    break;
+                case SUB:
+                    result = lhs - rhs;
+                    break;
+                default:
+                    break;
             }
         } catch (ArithmeticException e) {
             VirtualException exception = new VirtualException(ArithmeticException.class, e.getMessage());
@@ -70,23 +85,23 @@ public class BinaryMathOp extends MethodStateOp {
         Object result = null;
         try {
             switch (mathOperator) {
-            case ADD:
-                result = lhs + rhs;
-                break;
-            case DIV:
-                result = lhs / rhs;
-                break;
-            case MUL:
-                result = lhs * rhs;
-                break;
-            case REM:
-                result = lhs % rhs;
-                break;
-            case SUB:
-                result = lhs - rhs;
-                break;
-            default:
-                break;
+                case ADD:
+                    result = lhs + rhs;
+                    break;
+                case DIV:
+                    result = lhs / rhs;
+                    break;
+                case MUL:
+                    result = lhs * rhs;
+                    break;
+                case REM:
+                    result = lhs % rhs;
+                    break;
+                case SUB:
+                    result = lhs - rhs;
+                    break;
+                default:
+                    break;
             }
         } catch (ArithmeticException e) {
             VirtualException exception = new VirtualException(ArithmeticException.class, e.getMessage());
@@ -100,44 +115,44 @@ public class BinaryMathOp extends MethodStateOp {
         Object result = null;
         try {
             switch (mathOperator) {
-            case ADD:
-                result = lhs + rhs;
-                break;
-            case AND:
-                result = lhs & rhs;
-                break;
-            case DIV:
-                result = lhs / rhs;
-                break;
-            case MUL:
-                result = lhs * rhs;
-                break;
-            case OR:
-                result = lhs | rhs;
-                break;
-            case REM:
-                result = lhs % rhs;
-                break;
-            case RSUB:
-                result = rhs - lhs;
-                break;
-            case SHL:
-                result = lhs << (rhs & 0x1f);
-                break;
-            case SHR:
-                result = lhs >> (rhs & 0x1f);
-                break;
-            case SUB:
-                result = lhs - rhs;
-                break;
-            case USHR:
-                result = lhs >>> (rhs & 0x1f);
-                break;
-            case XOR:
-                result = lhs ^ rhs;
-                break;
-            default:
-                break;
+                case ADD:
+                    result = lhs + rhs;
+                    break;
+                case AND:
+                    result = lhs & rhs;
+                    break;
+                case DIV:
+                    result = lhs / rhs;
+                    break;
+                case MUL:
+                    result = lhs * rhs;
+                    break;
+                case OR:
+                    result = lhs | rhs;
+                    break;
+                case REM:
+                    result = lhs % rhs;
+                    break;
+                case RSUB:
+                    result = rhs - lhs;
+                    break;
+                case SHL:
+                    result = lhs << (rhs & 0x1f);
+                    break;
+                case SHR:
+                    result = lhs >> (rhs & 0x1f);
+                    break;
+                case SUB:
+                    result = lhs - rhs;
+                    break;
+                case USHR:
+                    result = lhs >>> (rhs & 0x1f);
+                    break;
+                case XOR:
+                    result = lhs ^ rhs;
+                    break;
+                default:
+                    break;
             }
         } catch (ArithmeticException e) {
             VirtualException exception = new VirtualException(ArithmeticException.class, e.getMessage());
@@ -151,41 +166,41 @@ public class BinaryMathOp extends MethodStateOp {
         Object result = null;
         try {
             switch (mathOperator) {
-            case ADD:
-                result = lhs + rhs;
-                break;
-            case AND:
-                result = lhs & rhs;
-                break;
-            case DIV:
-                result = lhs / rhs;
-                break;
-            case MUL:
-                result = lhs * rhs;
-                break;
-            case OR:
-                result = lhs | rhs;
-                break;
-            case REM:
-                result = lhs % rhs;
-                break;
-            case SHL:
-                result = lhs << rhs;
-                break;
-            case SHR:
-                result = lhs >> rhs;
-                break;
-            case SUB:
-                result = lhs - rhs;
-                break;
-            case USHR:
-                result = lhs >>> rhs;
-                break;
-            case XOR:
-                result = lhs ^ rhs;
-                break;
-            default:
-                break;
+                case ADD:
+                    result = lhs + rhs;
+                    break;
+                case AND:
+                    result = lhs & rhs;
+                    break;
+                case DIV:
+                    result = lhs / rhs;
+                    break;
+                case MUL:
+                    result = lhs * rhs;
+                    break;
+                case OR:
+                    result = lhs | rhs;
+                    break;
+                case REM:
+                    result = lhs % rhs;
+                    break;
+                case SHL:
+                    result = lhs << rhs;
+                    break;
+                case SHR:
+                    result = lhs >> rhs;
+                    break;
+                case SUB:
+                    result = lhs - rhs;
+                    break;
+                case USHR:
+                    result = lhs >>> rhs;
+                    break;
+                case XOR:
+                    result = lhs ^ rhs;
+                    break;
+                default:
+                    break;
             }
         } catch (ArithmeticException e) {
             VirtualException exception = new VirtualException(ArithmeticException.class, e.getMessage());
@@ -268,37 +283,6 @@ public class BinaryMathOp extends MethodStateOp {
         return result;
     }
 
-    private final int arg1Register;
-    private int arg2Register;
-    private final int destRegister;
-    private boolean hasLiteral;
-    private final MathOperandType mathOperandType;
-    private final MathOperator mathOperator;
-    private int narrowLiteral;
-
-    private BinaryMathOp(int address, String opName, int childAddress, int destRegister, int arg1Register) {
-        super(address, opName, childAddress);
-
-        this.destRegister = destRegister;
-        this.arg1Register = arg1Register;
-        mathOperator = getMathOp(opName);
-        mathOperandType = getMathOperandType(opName);
-
-        addException(new VirtualException(ArithmeticException.class, "/ by zero"));
-    }
-
-    private BinaryMathOp(int address, String opName, int childAddress, int destRegister, int arg1Register,
-                    int otherValue, boolean hasLiteral) {
-        this(address, opName, childAddress, destRegister, arg1Register);
-
-        this.hasLiteral = hasLiteral;
-        if (hasLiteral) {
-            narrowLiteral = otherValue;
-        } else {
-            arg2Register = otherValue;
-        }
-    }
-
     @Override
     public void execute(ExecutionNode node, MethodState mState) {
         HeapItem lhsItem = mState.readRegister(arg1Register);
@@ -349,29 +333,47 @@ public class BinaryMathOp extends MethodStateOp {
     private Object getResult(Object lhs, Object rhs) {
         Object result = null;
         switch (mathOperandType) {
-        case INT:
-            lhs = Utils.getIntegerValue(lhs);
-            rhs = Utils.getIntegerValue(rhs);
-            result = doIntegerOperation(mathOperator, (Integer) lhs, (Integer) rhs);
-            break;
-        case LONG:
-            lhs = Utils.getLongValue(lhs);
-            rhs = Utils.getLongValue(rhs);
-            result = doLongOperation(mathOperator, (Long) lhs, (Long) rhs);
-            break;
-        case FLOAT:
-            lhs = Utils.getFloatValue(lhs);
-            rhs = Utils.getFloatValue(rhs);
-            result = doFloatOperation(mathOperator, (Float) lhs, (Float) rhs);
-            break;
-        case DOUBLE:
-            lhs = Utils.getDoubleValue(lhs);
-            rhs = Utils.getDoubleValue(rhs);
-            result = doDoubleOperation(mathOperator, (Double) lhs, (Double) rhs);
-            break;
+            case INT:
+                lhs = Utils.getIntegerValue(lhs);
+                rhs = Utils.getIntegerValue(rhs);
+                result = doIntegerOperation(mathOperator, (Integer) lhs, (Integer) rhs);
+                break;
+            case LONG:
+                lhs = Utils.getLongValue(lhs);
+                rhs = Utils.getLongValue(rhs);
+                result = doLongOperation(mathOperator, (Long) lhs, (Long) rhs);
+                break;
+            case FLOAT:
+                lhs = Utils.getFloatValue(lhs);
+                rhs = Utils.getFloatValue(rhs);
+                result = doFloatOperation(mathOperator, (Float) lhs, (Float) rhs);
+                break;
+            case DOUBLE:
+                lhs = Utils.getDoubleValue(lhs);
+                rhs = Utils.getDoubleValue(rhs);
+                result = doDoubleOperation(mathOperator, (Double) lhs, (Double) rhs);
+                break;
         }
 
         return result;
+    }
+
+    private static enum MathOperandType {
+        DOUBLE("D"), FLOAT("F"), INT("I"), LONG("J"),;
+
+        private final String type;
+
+        MathOperandType(String type) {
+            this.type = type;
+        }
+
+        public String getType() {
+            return type;
+        }
+    }
+
+    private static enum MathOperator {
+        ADD, AND, DIV, MUL, OR, REM, RSUB, SHL, SHR, SUB, USHR, XOR,
     }
 
 }

@@ -1,14 +1,6 @@
 package org.cf.smalivm.opcode;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 import gnu.trove.map.TIntObjectMap;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.context.ExecutionNode;
@@ -25,8 +17,14 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
+
 @RunWith(Enclosed.class)
 public class TestCmpOp {
+
+    private static final String CLASS_NAME = "Lcmp_test;";
 
     @RunWith(MockitoJUnitRunner.class)
     public static class UnitTest {
@@ -175,8 +173,6 @@ public class TestCmpOp {
             doTest(value1, value2, Opcode.CMPG_DOUBLE, "D", 1);
         }
     }
-
-    private static final String CLASS_NAME = "Lcmp_test;";
 
     public static class TestDouble {
 

@@ -1,13 +1,13 @@
 package org.cf.smalivm.util;
 
-import static org.junit.Assert.assertEquals;
+import org.cf.util.SmaliClassUtils;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.cf.util.SmaliClassUtils;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 public class TestSmaliClassUtils {
 

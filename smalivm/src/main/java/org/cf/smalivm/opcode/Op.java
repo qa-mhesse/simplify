@@ -1,33 +1,36 @@
 package org.cf.smalivm.opcode;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.VirtualException;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public abstract class Op {
 
+    private final String opName;
+    private final Set<VirtualException> exceptions;
     // These should be final, but when graphs are modified, these values need to change.
     private int address;
     private int[] childAddresses;
 
-    private final String opName;
-    private final Set<VirtualException> exceptions;
-
     Op(int address, String opName, int childAddress) {
-        this(address, opName, new int[] { childAddress });
+        this(address, opName, new int[]{childAddress});
     }
 
     Op(int address, String opName, int[] childAddresses) {
         this.address = address;
         this.opName = opName;
         this.childAddresses = childAddresses;
-        exceptions = new HashSet<VirtualException>();
+        exceptions = new HashSet<>();
     }
 
     public final int getAddress() {
         return address;
+    }
+
+    public void setAddress(int address) {
+        this.address = address;
     }
 
     public final String getName() {
@@ -38,16 +41,12 @@ public abstract class Op {
         return childAddresses;
     }
 
-    public SideEffect.Level sideEffectLevel() {
-        return SideEffect.Level.NONE;
-    }
-
-    public void setAddress(int address) {
-        this.address = address;
-    }
-
     public void setChildren(int... childAddresses) {
         this.childAddresses = childAddresses;
+    }
+
+    public SideEffect.Level sideEffectLevel() {
+        return SideEffect.Level.NONE;
     }
 
     void addException(VirtualException exception) {

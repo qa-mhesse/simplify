@@ -1,12 +1,5 @@
 package org.cf.util;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.TokenSource;
 import org.antlr.runtime.tree.CommonTree;
@@ -20,6 +13,13 @@ import org.jf.smali.smaliParser;
 import org.jf.smali.smaliTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Dexifier {
 
@@ -36,7 +36,7 @@ public class Dexifier {
     }
 
     public static BuilderClassDef dexifySmaliFile(String filePath, InputStream is, DexBuilder dexBuilder)
-                    throws Exception {
+            throws Exception {
         File smaliFile = new File(filePath);
         InputStreamReader reader = new InputStreamReader(is, "UTF-8");
         LexerErrorInterface lexer = new smaliFlexLexer(reader);
@@ -69,9 +69,9 @@ public class Dexifier {
     public static List<BuilderClassDef> dexifySmaliFiles(File file, DexBuilder dexBuilder) throws Exception {
         List<File> smaliFiles;
         if (file.isDirectory()) {
-            smaliFiles = (List<File>) FileUtils.listFiles(file, new String[] { "smali" }, true);
+            smaliFiles = (List<File>) FileUtils.listFiles(file, new String[]{"smali"}, true);
         } else {
-            smaliFiles = new ArrayList<File>();
+            smaliFiles = new ArrayList<>();
             smaliFiles.add(file);
         }
 
@@ -79,7 +79,7 @@ public class Dexifier {
     }
 
     public static List<BuilderClassDef> dexifySmaliFiles(List<File> smaliFiles, DexBuilder dexBuilder) throws Exception {
-        List<BuilderClassDef> result = new ArrayList<BuilderClassDef>();
+        List<BuilderClassDef> result = new ArrayList<>();
         for (File smaliFile : smaliFiles) {
             result.add(dexifySmaliFile(smaliFile, dexBuilder));
         }

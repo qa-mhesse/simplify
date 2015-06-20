@@ -13,6 +13,17 @@ public class CmpOp extends MethodStateOp {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(CmpOp.class.getSimpleName());
+    private final int destRegister;
+    private final int lhsRegister;
+    private final int rhsRegister;
+
+    public CmpOp(int address, String opName, int childAddress, int destRegister, int lhsRegister, int rhsRegister) {
+        super(address, opName, childAddress);
+
+        this.destRegister = destRegister;
+        this.lhsRegister = lhsRegister;
+        this.rhsRegister = rhsRegister;
+    }
 
     static CmpOp create(Instruction instruction, int address) {
         String opName = instruction.getOpcode().name;
@@ -24,18 +35,6 @@ public class CmpOp extends MethodStateOp {
         int rhsRegister = instr.getRegisterC();
 
         return new CmpOp(address, opName, childAddress, destRegister, lhsRegister, rhsRegister);
-    }
-
-    private final int destRegister;
-    private final int lhsRegister;
-    private final int rhsRegister;
-
-    public CmpOp(int address, String opName, int childAddress, int destRegister, int lhsRegister, int rhsRegister) {
-        super(address, opName, childAddress);
-
-        this.destRegister = destRegister;
-        this.lhsRegister = lhsRegister;
-        this.rhsRegister = rhsRegister;
     }
 
     @Override
@@ -62,11 +61,11 @@ public class CmpOp extends MethodStateOp {
 
     private int cmp(Number val1, Number val2) {
         boolean arg1IsNan = ((val1 instanceof Float) && ((Float) val1).isNaN()) || ((val1 instanceof Double) && ((Double) val1)
-                        .isNaN());
+                .isNaN());
         boolean arg2IsNan = ((val2 instanceof Float) && ((Float) val2).isNaN()) || ((val2 instanceof Double) && ((Double) val2)
-                        .isNaN());
+                .isNaN());
 
-        int value = 0;
+        int value;
         if (arg1IsNan || arg2IsNan) {
             if (getName().startsWith("cmpg")) {
                 value = 1;
@@ -96,10 +95,6 @@ public class CmpOp extends MethodStateOp {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder(getName());
-        sb.append(" r").append(destRegister).append(", r").append(lhsRegister).append(", r").append(rhsRegister);
-
-        return sb.toString();
+        return getName() + " r" + destRegister + ", r" + lhsRegister + ", r" + rhsRegister;
     }
-
 }

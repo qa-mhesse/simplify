@@ -2,16 +2,15 @@ package org.cf.simplify;
 
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import org.cf.smalivm.VMTester;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.context.ExecutionGraph;
 import org.cf.smalivm.context.HeapItem;
 import org.jf.dexlib2.writer.builder.BuilderMethod;
 import org.jf.dexlib2.writer.builder.DexBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class OptimizerTester {
 
@@ -22,14 +21,14 @@ public class OptimizerTester {
     }
 
     public static MethodBackedGraph getMethodBackedGraph(String className, String methodSignature,
-                    TIntObjectMap<HeapItem> initial) {
+                                                         TIntObjectMap<HeapItem> initial) {
         Map<String, Map<String, HeapItem>> classNameToFieldValue = new HashMap<String, Map<String, HeapItem>>();
 
         return getMethodBackedGraph(className, methodSignature, initial, classNameToFieldValue);
     }
 
     public static MethodBackedGraph getMethodBackedGraph(String className, String methodSignature,
-                    TIntObjectMap<HeapItem> initial, Map<String, Map<String, HeapItem>> classNameToFieldValue) {
+                                                         TIntObjectMap<HeapItem> initial, Map<String, Map<String, HeapItem>> classNameToFieldValue) {
         // Force class reloading because implementations will have changed
         VirtualMachine vm = VMTester.getTestVM(true);
         String methodDescriptor = className + "->" + methodSignature;

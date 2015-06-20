@@ -1,8 +1,6 @@
 package org.cf.smalivm.context;
 
-import java.lang.reflect.Array;
-import java.util.Arrays;
-
+import com.rits.cloning.Cloner;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.cf.smalivm.type.UnknownValue;
@@ -10,7 +8,8 @@ import org.cf.util.ImmutableUtils;
 import org.cf.util.SmaliClassUtils;
 import org.cf.util.Utils;
 
-import com.rits.cloning.Cloner;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 
 public class HeapItem {
 
@@ -27,6 +26,10 @@ public class HeapItem {
     HeapItem(HeapItem other) {
         value = cloner.deepClone(other.getValue());
         type = other.getType();
+    }
+
+    public static HeapItem newUnknown(String type) {
+        return new HeapItem(new UnknownValue(), type);
     }
 
     public Object getValue() {
@@ -76,10 +79,6 @@ public class HeapItem {
 
     public boolean valueIdentity(HeapItem other) {
         return getValue() == other.getValue();
-    }
-
-    public static HeapItem newUnknown(String type) {
-        return new HeapItem(new UnknownValue(), type);
     }
 
     public boolean isPrimitive() {

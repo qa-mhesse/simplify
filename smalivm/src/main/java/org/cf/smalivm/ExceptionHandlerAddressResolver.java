@@ -1,15 +1,11 @@
 package org.cf.smalivm;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.cf.util.SmaliClassUtils;
 import org.jf.dexlib2.builder.BuilderTryBlock;
 import org.jf.dexlib2.iface.ExceptionHandler;
 import org.jf.dexlib2.iface.TryBlock;
+
+import java.util.*;
 
 public class ExceptionHandlerAddressResolver {
 
@@ -40,7 +36,7 @@ public class ExceptionHandlerAddressResolver {
         while ((currentExceptionClass = classAncestors.poll()) != null) {
             for (TryBlock<? extends ExceptionHandler> tryBlock : tryBlocks) {
                 if ((address < tryBlock.getStartCodeAddress()) || (address > (tryBlock.getStartCodeAddress() + tryBlock
-                                .getCodeUnitCount()))) {
+                        .getCodeUnitCount()))) {
                     // address is not inside of this try/catch
                     continue;
                 }
@@ -65,7 +61,7 @@ public class ExceptionHandlerAddressResolver {
         // Not caught by anything. Look for a catch-all / finally.
         for (TryBlock<? extends ExceptionHandler> tryBlock : tryBlocks) {
             if ((address < tryBlock.getStartCodeAddress()) || (address > (tryBlock.getStartCodeAddress() + tryBlock
-                            .getCodeUnitCount()))) {
+                    .getCodeUnitCount()))) {
                 // address is not inside of this try/catch
                 continue;
             }

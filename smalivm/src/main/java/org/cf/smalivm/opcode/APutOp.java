@@ -1,7 +1,5 @@
 package org.cf.smalivm.opcode;
 
-import java.lang.reflect.Array;
-
 import org.cf.smalivm.ClassManager;
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.VirtualMachine;
@@ -16,9 +14,27 @@ import org.jf.dexlib2.iface.instruction.formats.Instruction23x;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
+
 public class APutOp extends MethodStateOp {
 
     private static final Logger log = LoggerFactory.getLogger(APutOp.class.getSimpleName());
+    private final int arrayRegister;
+    private final int indexRegister;
+    private final int valueRegister;
+    private final ClassManager classManager;
+    public APutOp(int address, String opName, int childAddress, int putRegister, int arrayRegister, int indexRegister,
+                  ClassManager classManager) {
+        super(address, opName, childAddress);
+
+        this.valueRegister = putRegister;
+        this.arrayRegister = arrayRegister;
+        this.indexRegister = indexRegister;
+        this.classManager = classManager;
+
+        addException(new VirtualException(ArrayIndexOutOfBoundsException.class));
+        addException(new VirtualException(NullPointerException.class));
+    }
 
     static APutOp create(Instruction instruction, int address, VirtualMachine vm) {
         String opName = instruction.getOpcode().name;
@@ -30,25 +46,54 @@ public class APutOp extends MethodStateOp {
         int indexRegister = instr.getRegisterC();
 
         return new APutOp(address, opName, childAddress, putRegister, arrayRegister, indexRegister,
-                        vm.getClassManager());
+                vm.getClassManager());
     }
 
-    private final int arrayRegister;
-    private final int indexRegister;
-    private final int valueRegister;
-    private final ClassManager classManager;
+    private static boolean throwsArrayStoreException(ClassManager classManager, String arrayType, String valueType) {
+        String arrayComponentType = SmaliClassUtils.getComponentType(arrayType);
+        // These types are all represented identically in bytecode: Z B C S I
+        if (isOverloadedPrimitiveType(valueType) && isOverloadedPrimitiveType(arrayComponentType)) {
+            // TODO: figure out what dalvik actually does when you try to aput 0x2 into [B
+            // also try to find other edge cases, like Integer.MAX_VALUE in [S
+            return false;
+        }
 
-    public APutOp(int address, String opName, int childAddress, int putRegister, int arrayRegister, int indexRegister,
-                    ClassManager classManager) {
-        super(address, opName, childAddress);
+        try {
+            return !classManager.isInstance(valueType, arrayComponentType);
+        } catch (UnknownAncestors e) {
+            if (log.isWarnEnabled()) {
+                log.warn("Unknown ancestors for either {} or {}", valueType, arrayComponentType);
+            }
+            return true;
+        }
+    }
 
-        this.valueRegister = putRegister;
-        this.arrayRegister = arrayRegister;
-        this.indexRegister = indexRegister;
-        this.classManager = classManager;
+    private static boolean isOverloadedPrimitiveType(String type) {
+        return (SmaliClassUtils.isPrimitiveType(type) && !("F".equals(type) || "D".equals(type) || "J".equals(type)));
+    }
 
-        addException(new VirtualException(ArrayIndexOutOfBoundsException.class));
-        addException(new VirtualException(NullPointerException.class));
+    private static Object castValue(String opName, Object value) {
+        if (value instanceof Number) {
+            if (opName.endsWith("-wide")) {
+                // No need to cast anything
+            } else if (opName.endsWith("-boolean")) {
+                // Booleans are represented by integer literals, so need to convert
+                Integer intValue = Utils.getIntegerValue(value);
+                value = (intValue == 1 ? true : false);
+            } else {
+                Integer intValue = Utils.getIntegerValue(value);
+                if (opName.endsWith("-byte")) {
+                    value = intValue.byteValue();
+                } else if (opName.endsWith("-char")) {
+                    // Characters, like boolean, are represented by integers
+                    value = (char) intValue.intValue();
+                } else if (opName.endsWith("-short")) {
+                    value = intValue.shortValue();
+                }
+            }
+        }
+
+        return value;
     }
 
     @Override
@@ -98,53 +143,6 @@ public class APutOp extends MethodStateOp {
         // In most cases, register assignment means the old value was blown away.
         // The optimizer handles assignments for this op specially.
         mState.assignRegister(arrayRegister, arrayItem);
-    }
-
-    private static boolean throwsArrayStoreException(ClassManager classManager, String arrayType, String valueType) {
-        String arrayComponentType = SmaliClassUtils.getComponentType(arrayType);
-        // These types are all represented identically in bytecode: Z B C S I
-        if (isOverloadedPrimitiveType(valueType) && isOverloadedPrimitiveType(arrayComponentType)) {
-            // TODO: figure out what dalvik actually does when you try to aput 0x2 into [B
-            // also try to find other edge cases, like Integer.MAX_VALUE in [S
-            return false;
-        }
-
-        try {
-            return !classManager.isInstance(valueType, arrayComponentType);
-        } catch (UnknownAncestors e) {
-            if (log.isWarnEnabled()) {
-                log.warn("Unknown ancestors for either {} or {}", valueType, arrayComponentType);
-            }
-            return true;
-        }
-    }
-
-    private static boolean isOverloadedPrimitiveType(String type) {
-        return (SmaliClassUtils.isPrimitiveType(type) && !("F".equals(type) || "D".equals(type) || "J".equals(type)));
-    }
-
-    private static Object castValue(String opName, Object value) {
-        if (value instanceof Number) {
-            if (opName.endsWith("-wide")) {
-                // No need to cast anything
-            } else if (opName.endsWith("-boolean")) {
-                // Booleans are represented by integer literals, so need to convert
-                Integer intValue = Utils.getIntegerValue(value);
-                value = (intValue == 1 ? true : false);
-            } else {
-                Integer intValue = Utils.getIntegerValue(value);
-                if (opName.endsWith("-byte")) {
-                    value = intValue.byteValue();
-                } else if (opName.endsWith("-char")) {
-                    // Characters, like boolean, are represented by integers
-                    value = (char) intValue.intValue();
-                } else if (opName.endsWith("-short")) {
-                    value = intValue.shortValue();
-                }
-            }
-        }
-
-        return value;
     }
 
     @Override

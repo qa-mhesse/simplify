@@ -1,14 +1,14 @@
 package org.cf.smalivm.emulate;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.VirtualException;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.context.MethodState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class org_cf_simplify_Utils_breakpoint implements MethodStateMethod {
 

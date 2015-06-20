@@ -17,6 +17,18 @@ public class SPutOp extends ExecutionContextOp {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(SPutOp.class.getSimpleName());
+    private final String fieldDescriptor;
+    private final int valueRegister;
+    private final VirtualMachine vm;
+
+    public SPutOp(int address, String opName, int childAddress, int valueRegister, String fieldDescriptor,
+                  VirtualMachine vm) {
+        super(address, opName, childAddress);
+
+        this.valueRegister = valueRegister;
+        this.fieldDescriptor = fieldDescriptor;
+        this.vm = vm;
+    }
 
     static SPutOp create(Instruction instruction, int address, VirtualMachine vm) {
         String opName = instruction.getOpcode().name;
@@ -28,19 +40,6 @@ public class SPutOp extends ExecutionContextOp {
         String fieldDescriptor = ReferenceUtil.getFieldDescriptor(reference);
 
         return new SPutOp(address, opName, childAddress, destRegister, fieldDescriptor, vm);
-    }
-
-    private final String fieldDescriptor;
-    private final int valueRegister;
-    private final VirtualMachine vm;
-
-    public SPutOp(int address, String opName, int childAddress, int valueRegister, String fieldDescriptor,
-                    VirtualMachine vm) {
-        super(address, opName, childAddress);
-
-        this.valueRegister = valueRegister;
-        this.fieldDescriptor = fieldDescriptor;
-        this.vm = vm;
     }
 
     @Override
@@ -58,10 +57,6 @@ public class SPutOp extends ExecutionContextOp {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder(getName());
-        sb.append(" r").append(valueRegister).append(", ").append(fieldDescriptor);
-
-        return sb.toString();
+        return getName() + " r" + valueRegister + ", " + fieldDescriptor;
     }
-
 }

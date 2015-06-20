@@ -33,5 +33,5 @@ public class UninitializedInstance implements LocalType {
     public String toString() {
         return "Uninitialized " + smaliType;
     }
-    
+
 }

@@ -2,20 +2,11 @@ package org.cf.smalivm.opcode;
 
 import gnu.trove.list.TIntList;
 import gnu.trove.list.linked.TIntLinkedList;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.cf.smalivm.ClassManager;
 import org.cf.smalivm.MethodReflector;
 import org.cf.smalivm.SideEffect;
 import org.cf.smalivm.VirtualMachine;
-import org.cf.smalivm.context.ExecutionContext;
-import org.cf.smalivm.context.ExecutionGraph;
-import org.cf.smalivm.context.ExecutionNode;
-import org.cf.smalivm.context.HeapItem;
-import org.cf.smalivm.context.MethodState;
+import org.cf.smalivm.context.*;
 import org.cf.smalivm.emulate.MethodEmulator;
 import org.cf.smalivm.exception.MaxAddressVisitsExceeded;
 import org.cf.smalivm.exception.MaxCallDepthExceeded;
@@ -35,7 +26,33 @@ import org.jf.dexlib2.writer.builder.BuilderClassDef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class InvokeOp extends ExecutionContextOp {
+
+    private static final Logger log = LoggerFactory.getLogger(InvokeOp.class.getSimpleName());
+    private final boolean isStatic;
+    private final String methodDescriptor;
+    private final int[] parameterRegisters;
+    private final List<String> parameterTypes;
+    private final String returnType;
+    private final VirtualMachine vm;
+    private SideEffect.Level sideEffectLevel;
+
+    private InvokeOp(int address, String opName, int childAddress, String methodDescriptor, String returnType,
+                     int[] parameterRegisters, List<String> parameterTypes, VirtualMachine vm, boolean isStatic) {
+        super(address, opName, childAddress);
+
+        this.methodDescriptor = methodDescriptor;
+        this.returnType = returnType;
+        this.parameterRegisters = parameterRegisters;
+        this.parameterTypes = parameterTypes;
+        this.vm = vm;
+        this.isStatic = isStatic;
+        sideEffectLevel = SideEffect.Level.STRONG;
+    }
 
     static InvokeOp create(Instruction instruction, int address, VirtualMachine vm) {
         int childAddress = address + instruction.getCodeUnits();
@@ -60,17 +77,17 @@ public class InvokeOp extends ExecutionContextOp {
             int registerCount = instr.getRegisterCount();
             registers = new int[registerCount];
             switch (registerCount) {
-            case 5:
-                registers[4] = instr.getRegisterG();
-            case 4:
-                registers[3] = instr.getRegisterF();
-            case 3:
-                registers[2] = instr.getRegisterE();
-            case 2:
-                registers[1] = instr.getRegisterD();
-            case 1:
-                registers[0] = instr.getRegisterC();
-                break;
+                case 5:
+                    registers[4] = instr.getRegisterG();
+                case 4:
+                    registers[3] = instr.getRegisterF();
+                case 3:
+                    registers[2] = instr.getRegisterE();
+                case 2:
+                    registers[1] = instr.getRegisterD();
+                case 1:
+                    registers[0] = instr.getRegisterC();
+                    break;
             }
         }
 
@@ -79,7 +96,7 @@ public class InvokeOp extends ExecutionContextOp {
         boolean isStatic = opName.contains("-static");
         ClassManager classManager = vm.getClassManager();
         if (classManager.isLocalMethod(methodDescriptor) && !(classManager.isFramework(methodDescriptor) && !classManager
-                        .isSafeFramework(methodDescriptor))) {
+                .isSafeFramework(methodDescriptor))) {
             parameterTypes = classManager.getParameterTypes(methodDescriptor);
         } else {
             parameterTypes = Utils.getParameterTypes(methodDescriptor);
@@ -99,30 +116,44 @@ public class InvokeOp extends ExecutionContextOp {
         }
 
         return new InvokeOp(address, opName, childAddress, methodDescriptor, returnType, parameterRegisters.toArray(),
-                        parameterTypes, vm, isStatic);
+                parameterTypes, vm, isStatic);
     }
 
-    private static final Logger log = LoggerFactory.getLogger(InvokeOp.class.getSimpleName());
+    private static boolean doesNonLocalMethodExist(String className, String methodSignature) {
+        Class<?> klazz = null;
+        try {
+            klazz = Class.forName(SmaliClassUtils.smaliClassToJava(className));
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
 
-    private final boolean isStatic;
-    private final String methodDescriptor;
-    private final int[] parameterRegisters;
-    private final List<String> parameterTypes;
-    private final String returnType;
-    private SideEffect.Level sideEffectLevel;
-    private final VirtualMachine vm;
+        StringBuilder sb = new StringBuilder(className);
+        sb.append("->").append(methodSignature);
+        List<String> paramList = Utils.getParameterTypes(sb.toString());
+        Class<?>[] params = new Class<?>[paramList.size()];
+        for (int i = 0; i < paramList.size(); i++) {
+            String paramName = paramList.get(i);
+            try {
+                if (SmaliClassUtils.isPrimitiveType(paramName)) {
+                    params[i] = SmaliClassUtils.getPrimitiveType(SmaliClassUtils.smaliClassToJava(paramName));
+                } else {
+                    params[i] = Class.forName(SmaliClassUtils.smaliClassToJava(paramName));
+                }
+            } catch (ClassNotFoundException e) {
+                return false;
+            }
+        }
 
-    private InvokeOp(int address, String opName, int childAddress, String methodDescriptor, String returnType,
-                    int[] parameterRegisters, List<String> parameterTypes, VirtualMachine vm, boolean isStatic) {
-        super(address, opName, childAddress);
+        String methodName = methodSignature.split("\\(")[0];
+        try {
+            klazz.getMethod(methodName, params);
+        } catch (NoSuchMethodException e) {
+            return false;
+        } catch (SecurityException e) {
+            return false;
+        }
 
-        this.methodDescriptor = methodDescriptor;
-        this.returnType = returnType;
-        this.parameterRegisters = parameterRegisters;
-        this.parameterTypes = parameterTypes;
-        this.vm = vm;
-        this.isStatic = isStatic;
-        sideEffectLevel = SideEffect.Level.STRONG;
+        return true;
     }
 
     @Override
@@ -211,7 +242,7 @@ public class InvokeOp extends ExecutionContextOp {
         sb.append(" {");
         if (getName().contains("/range")) {
             sb.append("r").append(parameterRegisters[0]).append(" .. r")
-                            .append(parameterRegisters[parameterRegisters.length - 1]);
+                    .append(parameterRegisters[parameterRegisters.length - 1]);
         } else {
             if (parameterRegisters.length > 0) {
                 for (int register : parameterRegisters) {
@@ -226,7 +257,7 @@ public class InvokeOp extends ExecutionContextOp {
     }
 
     private boolean allArgumentsKnown(MethodState mState) {
-        for (int parameterRegister = mState.getParameterStart(); parameterRegister < mState.getRegisterCount();) {
+        for (int parameterRegister = mState.getParameterStart(); parameterRegister < mState.getRegisterCount(); ) {
             HeapItem item = mState.peekParameter(parameterRegister);
             if (item.isUnknown()) {
                 return false;
@@ -322,7 +353,7 @@ public class InvokeOp extends ExecutionContextOp {
     }
 
     private void executeLocalMethod(String methodDescriptor, ExecutionContext callerContext,
-                    ExecutionContext calleeContext) {
+                                    ExecutionContext calleeContext) {
         ExecutionGraph graph = null;
         try {
             graph = vm.execute(methodDescriptor, calleeContext, callerContext, parameterRegisters);
@@ -355,7 +386,7 @@ public class InvokeOp extends ExecutionContextOp {
     }
 
     private void executeNonLocalMethod(String methodDescriptor, MethodState callerContext,
-                    ExecutionContext calleeContext, ExecutionNode node) {
+                                       ExecutionContext calleeContext, ExecutionNode node) {
         if (MethodEmulator.canEmulate(methodDescriptor)) {
             MethodEmulator emulator = new MethodEmulator(vm, calleeContext, methodDescriptor);
             emulator.emulate();
@@ -409,50 +440,13 @@ public class InvokeOp extends ExecutionContextOp {
         String methodSignature = methodDescriptor.split("->")[1];
         ClassManager classManager = vm.getClassManager();
         String targetMethod = getLocalTargetForVirtualMethod(actualType, methodSignature, classManager,
-                        new HashSet<String>());
+                new HashSet<String>());
 
         return targetMethod != null ? targetMethod : methodDescriptor;
     }
 
-    private static boolean doesNonLocalMethodExist(String className, String methodSignature) {
-        Class<?> klazz = null;
-        try {
-            klazz = Class.forName(SmaliClassUtils.smaliClassToJava(className));
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-
-        StringBuilder sb = new StringBuilder(className);
-        sb.append("->").append(methodSignature);
-        List<String> paramList = Utils.getParameterTypes(sb.toString());
-        Class<?>[] params = new Class<?>[paramList.size()];
-        for (int i = 0; i < paramList.size(); i++) {
-            String paramName = paramList.get(i);
-            try {
-                if (SmaliClassUtils.isPrimitiveType(paramName)) {
-                    params[i] = SmaliClassUtils.getPrimitiveType(SmaliClassUtils.smaliClassToJava(paramName));
-                } else {
-                    params[i] = Class.forName(SmaliClassUtils.smaliClassToJava(paramName));
-                }
-            } catch (ClassNotFoundException e) {
-                return false;
-            }
-        }
-
-        String methodName = methodSignature.split("\\(")[0];
-        try {
-            klazz.getMethod(methodName, params);
-        } catch (NoSuchMethodException e) {
-            return false;
-        } catch (SecurityException e) {
-            return false;
-        }
-
-        return true;
-    }
-
     private String getLocalTargetForVirtualMethod(String className, String methodSignature, ClassManager classManager,
-                    Set<String> visited) {
+                                                  Set<String> visited) {
         visited.add(className);
         StringBuilder sb = new StringBuilder(className);
         sb.append("->").append(methodSignature);
