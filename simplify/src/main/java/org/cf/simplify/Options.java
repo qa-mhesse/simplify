@@ -1,28 +1,28 @@
 package org.cf.simplify;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.regex.Pattern;
-
 import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.FileOptionHandler;
 import org.kohsuke.args4j.spi.PatternOptionHandler;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.regex.Pattern;
+
 public class Options implements Serializable {
 
     private static final long serialVersionUID = -8592147369856820020L;
 
-    @Option(name = "-h", aliases = { "--help" }, usage = "Be helpful", help = true)
+    @Option(name = "-h", aliases = {"--help"}, usage = "Be helpful", help = true)
     private boolean help;
 
-    @Option(name = "-et", aliases = { "--exclude-types" }, metaVar = "regex", handler = PatternOptionHandler.class,
-                    usage = "Don't simplify matching types. Aapplied after include.")
+    @Option(name = "-et", aliases = {"--exclude-types"}, metaVar = "regex", handler = PatternOptionHandler.class,
+            usage = "Don't simplify matching types. Aapplied after include.")
     private Pattern excludeFilter;
 
-    @Option(name = "-it", aliases = { "--include-types" }, metaVar = "regex", handler = PatternOptionHandler.class,
-                    usage = "Only simplify type signatures matching regex.")
+    @Option(name = "-it", aliases = {"--include-types"}, metaVar = "regex", handler = PatternOptionHandler.class,
+            usage = "Only simplify type signatures matching regex.")
     private Pattern includeFilter;
 
     @Option(name = "--max-call-depth", usage = "Limit method call depth. Lower is faster, but misses things.")
@@ -32,33 +32,36 @@ public class Options implements Serializable {
     private int maxAddressVisits = 10000;
 
     @Option(name = "--max-method-visits",
-                    usage = "Maximum visits over all addresses in method. Higher for longer methods + loops.")
+            usage = "Maximum visits over all addresses in method. Higher for longer methods + loops.")
     private int maxMethodVisits = 1_000_000;
 
     @Option(name = "--max-passes", usage = "Limit optimization passes.")
     private int maxOptimizationPasses = 100;
 
-    @Option(name = "-o", aliases = { "--output" }, metaVar = "output", handler = FileOptionHandler.class,
-                    usage = "Output DEX file, default is <infile>_simple.dex")
+    @Option(name = "-o", aliases = {"--output"}, metaVar = "output", handler = FileOptionHandler.class,
+            usage = "Output DEX file, default is <infile>_simple.dex")
     private File outFile;
 
     @Option(name = "--output-api-level", usage = "Output DEX API compatibility level.")
     private int outputAPILevel = 15;
 
-    @Option(name = "-v", aliases = { "--verbose" }, usage = "Be verbose")
+    @Option(name = "-v", aliases = {"--verbose"}, usage = "Be verbose")
     private boolean verbose;
 
-    @Option(name = "-vv", aliases = { "--vverbose" }, usage = "Be very verbose")
+    @Option(name = "-vv", aliases = {"--vverbose"}, usage = "Be very verbose")
     private boolean vverbose;
 
-    @Option(name = "-vvv", aliases = { "--vvverbose" }, usage = "Abandon all hope ye who enter here")
+    @Option(name = "-vvv", aliases = {"--vvverbose"}, usage = "Abandon all hope ye who enter here")
     private boolean vvverbose;
 
-    @Option(name = "-q", aliases = { "--quiet" }, usage = "Be quiet")
+    @Option(name = "-q", aliases = {"--quiet"}, usage = "Be quiet")
     private boolean quiet;
 
     @Option(name = "--include-support", usage = "Include support library package path")
     private boolean includeSupportLibrary;
+
+    @Option(name = "--static-only", aliases = {"-s"}, usage = "Only emulate static part of classes")
+    private boolean staticOnly;
 
     private File inFile;
     private File outDexFile;
@@ -75,6 +78,27 @@ public class Options implements Serializable {
 
     public File getInFile() {
         return inFile;
+    }
+
+    @Option(name = "-i", aliases = {"--input"}, metaVar = "input", handler = FileOptionHandler.class,
+            usage = "Input SMALI file or folder", required = true)
+    private void setInFile(File inFile) {
+        this.inFile = inFile;
+        determineInputType();
+
+        String baseName = FilenameUtils.getBaseName(inFile.toString());
+        if (isApk) {
+            outFile = new File(baseName + "_simple.apk");
+            try {
+                outDexFile = File.createTempFile("simplify", "dex");
+            } catch (IOException e) {
+                System.err.println("Could not create temp file.\n" + e);
+                System.exit(-1);
+            }
+        } else {
+            outDexFile = new File(baseName + "_simple.dex");
+            outFile = outDexFile;
+        }
     }
 
     public int getMaxAddressVisits() {
@@ -137,29 +161,8 @@ public class Options implements Serializable {
         return vvverbose;
     }
 
-    @Option(name = "-i", aliases = { "--input" }, metaVar = "input", handler = FileOptionHandler.class,
-                    usage = "Input SMALI file or folder", required = true)
-    private void setInFile(File inFile) {
-        this.inFile = inFile;
-        determineInputType();
-
-        String baseName = FilenameUtils.getBaseName(inFile.toString());
-        if (isApk) {
-            String ext = FilenameUtils.getExtension(inFile.toString());
-            if (!ext.startsWith(".")) {
-                ext = "." + ext;
-            }
-            outFile = new File(baseName + "_simple.apk");
-            try {
-                outDexFile = File.createTempFile("simplify", "dex");
-            } catch (IOException e) {
-                System.err.println("Could not create temp file.\n" + e);
-                System.exit(-1);
-            }
-        } else {
-            outDexFile = new File(baseName + "_simple.dex");
-            outFile = outDexFile;
-        }
+    public boolean isStaticOnly() {
+        return staticOnly;
     }
 
     private void determineInputType() {
@@ -175,6 +178,7 @@ public class Options implements Serializable {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Include support library: ").append(includeSupportLibrary).append('\n');
+        sb.append("Static only: ").append(staticOnly).append('\n');
         sb.append("Max address visits: ").append(getMaxAddressVisits()).append('\n');
         sb.append("Max call depth: ").append(getMaxCallDepth()).append('\n');
         sb.append("Max method visits: ").append(getMaxMethodVisits()).append('\n');

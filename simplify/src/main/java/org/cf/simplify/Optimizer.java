@@ -1,17 +1,6 @@
 package org.cf.simplify;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.cf.simplify.strategy.ConstantPropigationStrategy;
-import org.cf.simplify.strategy.DeadRemovalStrategy;
-import org.cf.simplify.strategy.OptimizationStrategy;
-import org.cf.simplify.strategy.PeepholeStrategy;
-import org.cf.simplify.strategy.ReflectionRemovalStrategy;
+import org.cf.simplify.strategy.*;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.context.ExecutionGraph;
 import org.jf.dexlib2.util.ReferenceUtil;
@@ -20,12 +9,14 @@ import org.jf.dexlib2.writer.builder.DexBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+
 public class Optimizer {
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(Optimizer.class.getSimpleName());
 
-    private static final Map<String, Integer> totalOptimizationCounts = new HashMap<String, Integer>();
+    private static final Map<String, Integer> totalOptimizationCounts = new HashMap<>();
 
     private final List<OptimizationStrategy> allStrategies;
     private final MethodBackedGraph mbgraph;
@@ -41,22 +32,38 @@ public class Optimizer {
     public Optimizer(ExecutionGraph graph, BuilderMethod method, VirtualMachine vm, DexBuilder dexBuilder) {
         methodDescriptor = ReferenceUtil.getMethodDescriptor(method);
         mbgraph = new MethodBackedGraph(graph, method, vm, dexBuilder);
-        performOnceStrategies = new LinkedList<OptimizationStrategy>();
+        performOnceStrategies = new LinkedList<>();
+        performOnceStrategies.add(new StaticFieldSimplificationStrategy(mbgraph));
         performOnceStrategies.add(new ConstantPropigationStrategy(mbgraph));
         performOnceStrategies.add(new PeepholeStrategy(mbgraph));
 
-        performRepeatedlyStrategies = new LinkedList<OptimizationStrategy>();
+        performRepeatedlyStrategies = new LinkedList<>();
         performRepeatedlyStrategies.add(new DeadRemovalStrategy(mbgraph));
 
-        methodReexecuteStrategies = new LinkedList<OptimizationStrategy>();
+        methodReexecuteStrategies = new LinkedList<>();
         methodReexecuteStrategies.add(new ReflectionRemovalStrategy(mbgraph));
 
-        allStrategies = new LinkedList<OptimizationStrategy>();
+        allStrategies = new LinkedList<>();
         allStrategies.addAll(performOnceStrategies);
         allStrategies.addAll(performRepeatedlyStrategies);
         allStrategies.addAll(methodReexecuteStrategies);
 
-        optimizationCounts = new HashMap<String, Integer>();
+        optimizationCounts = new HashMap<>();
+    }
+
+    public static String getTotalOptimizationCounts() {
+        StringBuilder sb = new StringBuilder("Total optimizations: ");
+        Set<String> keySet = totalOptimizationCounts.keySet();
+        String[] keys = keySet.toArray(new String[keySet.size()]);
+        Arrays.sort(keys);
+        for (String key : keys) {
+            sb.append(key).append('=').append(totalOptimizationCounts.get(key)).append(", ");
+        }
+        if (sb.length() > "Total optimizations: ".length()) {
+            sb.setLength(sb.length() - 2);
+        }
+
+        return sb.toString();
     }
 
     public void simplify(int maxSweeps) {
@@ -127,21 +134,6 @@ public class Optimizer {
             sb.append(key).append('=').append(optimizationCounts.get(key)).append(", ");
         }
         if (sb.length() > "Optimizations: ".length()) {
-            sb.setLength(sb.length() - 2);
-        }
-
-        return sb.toString();
-    }
-
-    public static String getTotalOptimizationCounts() {
-        StringBuilder sb = new StringBuilder("Total optimizations: ");
-        Set<String> keySet = totalOptimizationCounts.keySet();
-        String[] keys = keySet.toArray(new String[keySet.size()]);
-        Arrays.sort(keys);
-        for (String key : keys) {
-            sb.append(key).append('=').append(totalOptimizationCounts.get(key)).append(", ");
-        }
-        if (sb.length() > "Total optimizations: ".length()) {
             sb.setLength(sb.length() - 2);
         }
 

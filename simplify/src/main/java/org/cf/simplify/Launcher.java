@@ -1,21 +1,6 @@
 package org.cf.simplify;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.AccessMode;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
+import ch.qos.logback.classic.Level;
 import org.apache.commons.io.FileUtils;
 import org.cf.smalivm.ClassManager;
 import org.cf.smalivm.VirtualMachine;
@@ -32,7 +17,12 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.qos.logback.classic.Level;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.*;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class Launcher {
 
@@ -59,8 +49,8 @@ public class Launcher {
     }
 
     private static ClassManager getClassManager(File inFile, boolean disassemble, DexBuilder dexBuilder)
-                    throws IOException {
-        ClassManager classManager = null;
+            throws IOException {
+        ClassManager classManager;
         if (disassemble) {
             String outPath = disassemble(inFile);
             classManager = new ClassManager(outPath, dexBuilder);
@@ -75,12 +65,69 @@ public class Launcher {
         // No, no, I'll do it since you're too lazy to do this yourself.
         // All these options are just for funsies. Could help with debugging.
         Path tempDir = Files.createTempDirectory("simplify");
-        String[] args = new String[] {
-                        "--use-locals", "--sequential-labels", "--code-offsets", file.getAbsolutePath(), "--output",
-                        tempDir.toString(), };
+        String[] args = new String[]{
+                "--use-locals", "--sequential-labels", "--code-offsets", file.getAbsolutePath(), "--output",
+                tempDir.toString(),};
         org.jf.baksmali.main.main(args);
 
         return tempDir.toString();
+    }
+
+    private static void updateZip(File zip, File entry, String entryName) throws IOException {
+        Map<String, String> env = new HashMap<>();
+        String uriPath = "jar:file:" + zip.getAbsolutePath();
+        URI uri = URI.create(uriPath);
+        try (FileSystem fs = FileSystems.newFileSystem(uri, env)) {
+            fs.provider().checkAccess(fs.getPath(entryName), AccessMode.READ);
+            Path target = fs.getPath(entryName);
+            Path source = entry.toPath();
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private static void filterMethods(Collection<String> methodDescriptors, Pattern positive, Pattern negative) {
+        for (Iterator<String> it = methodDescriptors.iterator(); it.hasNext(); ) {
+            String name = it.next();
+            if ((positive != null) && !positive.matcher(name).find()) {
+                it.remove();
+            }
+
+            if ((negative != null) && negative.matcher(name).find()) {
+                it.remove();
+            }
+        }
+    }
+
+    private static void filterSupportLibrary(Collection<String> methodDescriptors) {
+        for (Iterator<String> it = methodDescriptors.iterator(); it.hasNext(); ) {
+            String name = it.next();
+            if (SUPPORT_LIBRARY_PATTERN.matcher(name).find()) {
+                it.remove();
+            }
+        }
+    }
+
+    private static void setLogLevel(Options bean) {
+        if (bean.isQuiet()) {
+            ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory
+                    .getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+            rootLogger.setLevel(Level.OFF);
+            return;
+        }
+
+        if (bean.isVerbose()) {
+            ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory
+                    .getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+            rootLogger.setLevel(Level.INFO);
+        } else if (bean.isVverbose()) {
+            ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory
+                    .getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+            rootLogger.setLevel(Level.DEBUG);
+        } else if (bean.isVvverbose()) {
+            ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory
+                    .getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+            rootLogger.setLevel(Level.TRACE);
+        }
     }
 
     public void run(String[] args) throws IOException, UnhandledVirtualException {
@@ -95,7 +142,7 @@ public class Launcher {
         DexBuilder dexBuilder = DexBuilder.makeDexBuilder(opts.getOutputAPILevel());
         ClassManager classManager = getClassManager(opts.getInFile(), opts.isApk() | opts.isDex(), dexBuilder);
         VirtualMachine vm = new VirtualMachine(classManager, opts.getMaxAddressVisits(), opts.getMaxCallDepth(),
-                        opts.getMaxMethodVisits());
+                opts.getMaxMethodVisits());
 
         Set<String> classNames = classManager.getNonFrameworkClassNames();
         for (String className : classNames) {
@@ -106,7 +153,12 @@ public class Launcher {
             }
 
             for (String methodDescriptor : methodDescriptors) {
-                boolean shouldExecuteAgain = false;
+                if (opts.isStaticOnly() && !methodDescriptor.endsWith("<clinit>()V")) {
+                    System.out.println("Skipping " + methodDescriptor);
+                    continue;
+                }
+
+                boolean shouldExecuteAgain;
                 do {
                     System.out.println("Executing: " + methodDescriptor);
                     ExecutionGraph graph = null;
@@ -144,68 +196,6 @@ public class Launcher {
         if (opts.isApk()) {
             FileUtils.copyFile(opts.getInFile(), opts.getOutFile());
             updateZip(opts.getOutFile(), opts.getOutDexFile(), "classes.dex");
-        }
-    }
-
-    private static void updateZip(File zip, File entry, String entryName) throws IOException {
-        Map<String, String> env = new HashMap<String, String>();
-        String uriPath = "jar:file:" + zip.getAbsolutePath();
-        URI uri = URI.create(uriPath);
-        FileSystem fs = FileSystems.newFileSystem(uri, env);
-        try {
-            fs.provider().checkAccess(fs.getPath(entryName), AccessMode.READ);
-            Path target = fs.getPath(entryName);
-            Path source = entry.toPath();
-            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw e;
-        } finally {
-            fs.close();
-        }
-    }
-
-    private static void filterMethods(Collection<String> methodDescriptors, Pattern positive, Pattern negative) {
-        for (Iterator<String> it = methodDescriptors.iterator(); it.hasNext();) {
-            String name = it.next();
-            if ((positive != null) && !positive.matcher(name).find()) {
-                it.remove();
-            }
-
-            if ((negative != null) && negative.matcher(name).find()) {
-                it.remove();
-            }
-        }
-    }
-
-    private static void filterSupportLibrary(Collection<String> methodDescriptors) {
-        for (Iterator<String> it = methodDescriptors.iterator(); it.hasNext();) {
-            String name = it.next();
-            if (SUPPORT_LIBRARY_PATTERN.matcher(name).find()) {
-                it.remove();
-            }
-        }
-    }
-
-    private static void setLogLevel(Options bean) {
-        if (bean.isQuiet()) {
-            ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory
-                            .getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-            rootLogger.setLevel(Level.OFF);
-            return;
-        }
-
-        if (bean.isVerbose()) {
-            ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory
-                            .getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-            rootLogger.setLevel(Level.INFO);
-        } else if (bean.isVverbose()) {
-            ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory
-                            .getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-            rootLogger.setLevel(Level.DEBUG);
-        } else if (bean.isVvverbose()) {
-            ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory
-                            .getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-            rootLogger.setLevel(Level.TRACE);
         }
     }
 
