@@ -157,5 +157,4 @@ public class SmaliClassUtils {
     public static Class<?> getPrimitiveType(String javaClassName) {
         return javaPrimitiveToType.get(javaClassName);
     }
-
 }

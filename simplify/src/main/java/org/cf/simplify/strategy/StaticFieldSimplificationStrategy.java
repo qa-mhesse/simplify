@@ -11,6 +11,7 @@ import org.cf.smalivm.context.HeapItem;
 import org.cf.smalivm.opcode.*;
 import org.cf.smalivm.type.UninitializedInstance;
 import org.cf.smalivm.type.UnknownValue;
+import org.cf.util.SmaliClassUtils;
 import org.jf.dexlib2.Opcode;
 import org.jf.dexlib2.builder.BuilderInstruction;
 import org.jf.dexlib2.builder.instruction.*;
@@ -19,6 +20,7 @@ import org.jf.dexlib2.writer.builder.BuilderFieldReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,13 +28,13 @@ import java.util.Set;
 
 public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
     private static final Logger log = LoggerFactory.getLogger(StaticFieldSimplificationStrategy.class.getSimpleName());
-    private final MethodBackedGraph mbgraph;
+    private final MethodBackedGraph graph;
     private int simplificationCount;
     private int addrDiff;
     private int insertedInstructions;
 
-    public StaticFieldSimplificationStrategy(MethodBackedGraph mbgraph) {
-        this.mbgraph = mbgraph;
+    public StaticFieldSimplificationStrategy(MethodBackedGraph graph) {
+        this.graph = graph;
         simplificationCount = 0;
         addrDiff = 0;
         insertedInstructions = 0;
@@ -46,10 +48,10 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
     }
 
     public boolean perform() {
-        if (!mbgraph.getMethodDescriptor().endsWith("<clinit>()V")) return false;
+        if (!graph.getMethodDescriptor().endsWith("<clinit>()V")) return false;
 
         // obtain last instruction
-        ExecutionNode last = mbgraph.getRoot();
+        ExecutionNode last = graph.getRoot();
         while (last.getChildren().size() > 0) {
             last = last.getChildren().get(0);
         }
@@ -60,7 +62,7 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
 
         int nrFields = 0;
         for (String className : initClasses) {
-            if (!mbgraph.getMethodDescriptor().startsWith(className)) continue;
+            if (!graph.getMethodDescriptor().startsWith(className)) continue;
             ClassState classState = c.peekClassState(className);
             nrFields = classState.getFieldNames().size();
 
@@ -69,7 +71,8 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
                 Object fieldValue = field.getValue();
 
                 if (!(fieldValue instanceof UnknownValue || fieldValue instanceof UninitializedInstance)) {
-                    if (isPrimitive(fieldValue)) {
+                    System.out.println("field " + fieldName);
+                    if (canMakeSimpleConstant(field.getType())) {
                         simplificationCount += substitutePrimitiveField(last, className, fieldName, field);
                     } else if (fieldValue.getClass().isArray()) {
                         simplificationCount += substituteArrayField(last, className, fieldName, field);
@@ -90,24 +93,26 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
     }
 
     private void removeUnnecessaryInstructions(ExecutionNode last) {
+        System.out.println(graph.toSmali());
+
         // remove all switch / switch-payload instructions first
         while (true) {
-            TIntList addresses = new TIntArrayList(mbgraph.getAddresses());
+            TIntList addresses = new TIntArrayList(graph.getAddresses());
             addresses.sort();
             int[] addrs = addresses.toArray();
 
             boolean removedInstruction = false;
             for (int i = 0; i < addrs.length && !removedInstruction; i++) {
-                Op o = mbgraph.getTemplateNode(addrs[i]).getOp();
+                Op o = graph.getTemplateNode(addrs[i]).getOp();
                 if (o instanceof SwitchOp || o instanceof SwitchPayloadOp) {
                     try {
-                        mbgraph.removeInstruction(addrs[i]);
+                        graph.removeInstruction(addrs[i]);
                         removedInstruction = true;
 
                         if (log.isInfoEnabled()) {
                             log.info("removed " + o.toString() + " @" + addrs[i]);
                         }
-                    } catch (IndexOutOfBoundsException e) {
+                    } catch (IndexOutOfBoundsException | NullPointerException | IllegalStateException e) {
                         log.warn("tried to remove switch instruction which isn't there: " + o.toString() + " @" + addrs[i]);
                     }
                 }
@@ -116,23 +121,23 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
         }
 
         // then remove all goto instructions
-        /*while (true) {
-            TIntList addresses = new TIntArrayList(mbgraph.getAddresses());
+        while (true) {
+            TIntList addresses = new TIntArrayList(graph.getAddresses());
             addresses.sort();
             int[] addrs = addresses.toArray();
 
             boolean removedInstruction = false;
             for (int i = 0; i < addrs.length && !removedInstruction; i++) {
-                Op o = mbgraph.getTemplateNode(addrs[i]).getOp();
+                Op o = graph.getTemplateNode(addrs[i]).getOp();
                 if (o instanceof GotoOp) {
                     try {
-                        mbgraph.removeInstruction(addrs[i]);
+                        graph.removeInstruction(addrs[i]);
                         removedInstruction = true;
 
                         if (log.isInfoEnabled()) {
                             log.info("removed " + o.toString() + " @" + addrs[i]);
                         }
-                    } catch (IndexOutOfBoundsException e) {
+                    } catch (IndexOutOfBoundsException | NullPointerException | IllegalStateException e) {
                         log.warn("tried to remove goto instruction which isn't there: " + o.toString() + " @" + addrs[i]);
                     }
                 }
@@ -142,32 +147,32 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
 
         // thirdly remove all if instructions
         while (true) {
-            TIntList addresses = new TIntArrayList(mbgraph.getAddresses());
+            TIntList addresses = new TIntArrayList(graph.getAddresses());
             addresses.sort();
             int[] addrs = addresses.toArray();
 
             boolean removedInstruction = false;
             for (int i = 0; i < addrs.length && !removedInstruction; i++) {
-                Op o = mbgraph.getTemplateNode(addrs[i]).getOp();
+                Op o = graph.getTemplateNode(addrs[i]).getOp();
                 if (o instanceof IfOp) {
                     try {
-                        mbgraph.removeInstruction(addrs[i]);
+                        graph.removeInstruction(addrs[i]);
                         removedInstruction = true;
 
                         if (log.isInfoEnabled()) {
                             log.info("removed " + o.toString() + " @" + addrs[i]);
                         }
-                    } catch (IndexOutOfBoundsException e) {
+                    } catch (IndexOutOfBoundsException | NullPointerException | IllegalStateException e) {
                         log.warn("tried to remove if instruction which isn't there: " + o.toString() + " @" + addrs[i]);
                     }
                 }
             }
             if (!removedInstruction) break;
-        }*/
+        }
 
         // remove all other instructions that we don't need
         while (true) {
-            TIntList addresses = new TIntArrayList(mbgraph.getAddresses());
+            TIntList addresses = new TIntArrayList(graph.getAddresses());
             addresses.sort();
             int[] addrs = addresses.toArray();
 
@@ -189,14 +194,14 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
 
                 if (canBeRemoved) {
                     try {
-                        String op = mbgraph.getTemplateNode(addrs[i]).getOp().toString();
-                        mbgraph.removeInstruction(addrs[i]);
+                        String op = graph.getTemplateNode(addrs[i]).getOp().toString();
+                        graph.removeInstruction(addrs[i]);
                         removedInstruction = true;
 
                         if (log.isInfoEnabled()) {
                             log.info("removed " + op + " @" + addrs[i]);
                         }
-                    } catch (IndexOutOfBoundsException | NullPointerException e) {
+                    } catch (IndexOutOfBoundsException | NullPointerException | IllegalStateException e) {
                         log.warn("tried to remove instruction which isn't there: @" + addrs[i]);
                     }
                 }
@@ -204,16 +209,19 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
             if (!removedInstruction) break;
         }
 
-        System.out.println(mbgraph.toSmali());
+        System.out.println(graph.toSmali());
     }
 
     private int substitutePrimitiveField(ExecutionNode last, String className, String fieldName, HeapItem field) {
         Object fieldValue = field.getValue();
 
-        BuilderInstruction createStatic = ConstantBuilder.buildConstant(fieldValue, field.getType(), 0, mbgraph.getDexBuilder());
+        BuilderInstruction createStatic = ConstantBuilder.buildConstant(fieldValue, field.getType(), 0, graph.getDexBuilder());
+
+        if (createStatic == null) return 0;
+
         String realFieldName = fieldName.substring(0, fieldName.length() - field.getType().length() - 1);
-        BuilderFieldReference bfr = mbgraph.getDexBuilder().internFieldReference(mbgraph.getVM().getClassManager().getField(className, realFieldName));
-        BuilderInstruction assignStatic = new BuilderInstruction21c((isWide(fieldValue) ? Opcode.SPUT_WIDE : Opcode.SPUT), 0, bfr);
+        BuilderFieldReference bfr = graph.getDexBuilder().internFieldReference(graph.getVM().getClassManager().getField(className, realFieldName));
+        BuilderInstruction assignStatic = new BuilderInstruction21c(getOpCodeVariant("SPUT", SmaliClassUtils.getBaseClass(field.getType())), 0, bfr);
 
         insert(last.getAddress(), createStatic);
         insert(last.getAddress(), assignStatic);
@@ -226,50 +234,63 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
         return 1;
     }
 
-    private int substituteArrayField(ExecutionNode lastAddress, String className, String fieldName, HeapItem field) {
-        int i = 0;
-
+    private int substituteArrayField(ExecutionNode last, String className, String fieldName, HeapItem field) {
         String realFieldName = fieldName.substring(0, fieldName.length() - field.getType().length() - 1);
-        BuilderFieldReference bfr = mbgraph.getDexBuilder().internFieldReference(mbgraph.getVM().getClassManager().getField(className, realFieldName));
-        BuilderInstruction arraySize = ConstantBuilder.buildConstant(((Object[]) field.getValue()).length, "I", 1, mbgraph.getDexBuilder());
-        BuilderInstruction newArray = new BuilderInstruction22c(Opcode.NEW_ARRAY, 0, 1, mbgraph.getDexBuilder().internTypeReference(field.getType()));
-        insert(lastAddress.getAddress(), arraySize);
-        insert(lastAddress.getAddress(), newArray);
+        BuilderFieldReference bfr = graph.getDexBuilder().internFieldReference(graph.getVM().getClassManager().getField(className, realFieldName));
+        BuilderInstruction arraySize = ConstantBuilder.buildConstant(Array.getLength(field.getValue()), "I", 1, graph.getDexBuilder());
+        BuilderInstruction newArray = new BuilderInstruction22c(Opcode.NEW_ARRAY, 0, 1, graph.getDexBuilder().internTypeReference(field.getType()));
+        insert(last.getAddress(), arraySize);
+        insert(last.getAddress(), newArray);
 
         int changes = 0;
 
-        for (Object o : (Object[]) field.getValue()) {
-            if (o instanceof UnknownValue) continue;
-            else if (o.getClass().isPrimitive() || o.getClass().equals(String.class)) {
-                BuilderInstruction arrayIndex = ConstantBuilder.buildConstant(i, "I", 1, mbgraph.getDexBuilder());
-                BuilderInstruction createStatic = ConstantBuilder.buildConstant(o, field.getType().substring(1), 2, mbgraph.getDexBuilder());
-                BuilderInstruction assignStatic = new BuilderInstruction23x((isWide(o) ? Opcode.APUT_WIDE : Opcode.APUT), 2, 0, 1);
-
-                insert(lastAddress.getAddress(), arrayIndex);
-                insert(lastAddress.getAddress(), createStatic);
-                insert(lastAddress.getAddress(), assignStatic);
-
-                changes++;
-                if (log.isInfoEnabled()) {
-                    log.info("Directly set primitive entry #" + i + " of array field " + fieldName + " to \"" + o + "\"");
+        for (int i = 0; i < Array.getLength(field.getValue()); i++) {
+            Object arrayEntry = Array.get(field.getValue(), i);
+            if (!(arrayEntry instanceof UnknownValue || arrayEntry instanceof UninitializedInstance)) {
+                if (canMakeArraySimpleConstant(field.getType())) {
+                    changes += substituteArrayPrimitive(last, 0, i, arrayEntry, field.getType().substring(1));
+                } else {
+                    changes += substituteArrayNonPrimitive(last, 0, i, arrayEntry, field.getType().substring(1));
                 }
-            } else {
-                // TODO: set field to value
-                System.out.println("  [" + i + "]: object (" + o.getClass() + ") = " + o);
+
+                if (log.isInfoEnabled()) {
+                    log.info("Directly set primitive entry #" + i + " of array field " + fieldName + " to \"" + arrayEntry + "\"");
+                }
             }
-            i++;
         }
 
         if (changes > 0) {
             BuilderInstruction putArray = new BuilderInstruction21c(Opcode.SPUT_OBJECT, 0, bfr);
-            insert(lastAddress.getAddress(), putArray);
+            insert(last.getAddress(), putArray);
         } else {
-            mbgraph.removeInstruction(lastAddress.getAddress());
-            mbgraph.removeInstruction(lastAddress.getAddress());
+            graph.removeInstruction(last.getAddress());
+            graph.removeInstruction(last.getAddress());
             insertedInstructions -= 2;
         }
 
         return changes > 1 ? 1 : 0;
+    }
+
+    private int substituteArrayNonPrimitive(ExecutionNode last, int arrayRegister, int index, Object value, String smaliType) {
+        // TODO: set field to value
+        System.out.println("  [" + index + "]: object = " + value);
+        return 0;
+    }
+
+    private int substituteArrayPrimitive(ExecutionNode last, int arrayRegister, int index, Object primitiveValue, String smaliType) {
+        int indexRegister = arrayRegister == 0 ? 1 : 0;
+        int constantRegister = arrayRegister == 0 || arrayRegister == 1 ? 2 : 1;
+        BuilderInstruction arrayIndex = ConstantBuilder.buildConstant(index, "I", indexRegister, graph.getDexBuilder());
+        BuilderInstruction createStatic = ConstantBuilder.buildConstant(primitiveValue, smaliType, constantRegister, graph.getDexBuilder());
+
+        if (createStatic == null) return 0;
+        BuilderInstruction assignStatic = new BuilderInstruction23x(getOpCodeVariant("APUT", smaliType), constantRegister, arrayRegister, indexRegister);
+
+        insert(last.getAddress(), arrayIndex);
+        insert(last.getAddress(), createStatic);
+        insert(last.getAddress(), assignStatic);
+
+        return 1;
     }
 
     private int substituteNonPrimitiveField(ExecutionNode last, String className, String fieldName, HeapItem field) {
@@ -290,7 +311,7 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
         traceBackNonPrimitiveRegister(last, parent, register, fieldType);
 
         String realFieldName = fieldName.substring(0, fieldName.length() - fieldType.length() - 1);
-        BuilderFieldReference bfr = mbgraph.getDexBuilder().internFieldReference(mbgraph.getVM().getClassManager().getField(className, realFieldName));
+        BuilderFieldReference bfr = graph.getDexBuilder().internFieldReference(graph.getVM().getClassManager().getField(className, realFieldName));
         BuilderInstruction putObject = new BuilderInstruction21c(Opcode.SPUT_OBJECT, register, bfr);
         insert(last.getAddress(), putObject);
     }
@@ -306,11 +327,11 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
             case "InvokeOp":
                 InvokeOp inv = (InvokeOp) parent.getOp();
                 String md = inv.getMethodDescriptor();
-                List<String> types = mbgraph.getVM().getClassManager().getParameterTypes(md);
+                List<String> types = graph.getVM().getClassManager().getParameterTypes(md);
 
                 int i = 0;
                 for (int r : inv.getParameterRegisters()) {
-                    BuilderInstruction buildConstant = ConstantBuilder.buildConstant(parent.getContext().getMethodState().peekRegister(r).getValue(), types.get(i), r, mbgraph.getDexBuilder());
+                    BuilderInstruction buildConstant = ConstantBuilder.buildConstant(parent.getContext().getMethodState().peekRegister(r).getValue(), types.get(i), r, graph.getDexBuilder());
                     if (buildConstant == null) {
                         traceBackNonPrimitiveRegister(last, parent, r, types.get(i));
                     } else insert(last.getAddress(), buildConstant);
@@ -318,7 +339,7 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
                 }
 
                 BuilderInstruction invoke;
-                MethodReference mr = mbgraph.getDexBuilder().internMethodReference(mbgraph.getVM().getClassManager().getMethod(md));
+                MethodReference mr = graph.getDexBuilder().internMethodReference(graph.getVM().getClassManager().getMethod(md));
                 if (parent.getOp().toString().split(" ")[0].contains("/range")) {
                     invoke = new BuilderInstruction3rc(getInvokeOpCode(inv.toString()), inv.getParameterRegisters()[0], inv.getParameterRegisters().length, mr);
                 } else {
@@ -356,7 +377,7 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
 
                 traceBackNonPrimitiveRegister(last, parent, ((IGetOp) parent.getOp()).getInstanceRegister(), field[1]);
 
-                BuilderFieldReference bfr = mbgraph.getDexBuilder().internFieldReference(mbgraph.getVM().getClassManager().getField(fd[0], field[0]));
+                BuilderFieldReference bfr = graph.getDexBuilder().internFieldReference(graph.getVM().getClassManager().getField(fd[0], field[0]));
                 BuilderInstruction getObject = new BuilderInstruction21c(Opcode.IGET_OBJECT, register, bfr);
                 insert(last.getAddress(), getObject);
                 break;
@@ -370,23 +391,15 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
                     throw new UnsupportedOperationException("Field name contains ':'" + sop.getFieldDescriptor());
                 fd[1] = fd[1].split(":")[0];
 
-                bfr = mbgraph.getDexBuilder().internFieldReference(mbgraph.getVM().getClassManager().getField(fd[0], fd[1]));
+                bfr = graph.getDexBuilder().internFieldReference(graph.getVM().getClassManager().getField(fd[0], fd[1]));
                 getObject = new BuilderInstruction21c(Opcode.SGET_OBJECT, register, bfr);
                 insert(last.getAddress(), getObject);
                 break;
 
             case "NewInstanceOp":
-                insert(last.getAddress(), new BuilderInstruction21c(Opcode.NEW_INSTANCE, register, mbgraph.getDexBuilder().internTypeReference(type)));
+                insert(last.getAddress(), new BuilderInstruction21c(Opcode.NEW_INSTANCE, register, graph.getDexBuilder().internTypeReference(type)));
                 break;
         }
-    }
-
-    private boolean isPrimitive(Object o) {
-        return o.getClass().isPrimitive() || o.getClass().equals(String.class);
-    }
-
-    private boolean isWide(Object o) {
-        return o.getClass().equals(Long.class) || o.getClass().equals(Double.class);
     }
 
     private boolean registerInParameterList(Op op, int register) {
@@ -418,8 +431,34 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
     }
 
     private void insert(int addr, BuilderInstruction bi) {
-        mbgraph.insertInstruction(addr, bi);
+        graph.insertInstruction(addr, bi);
         insertedInstructions++;
         addrDiff += bi.getCodeUnits();
+    }
+
+    private boolean canMakeSimpleConstant(String smaliType) {
+        return SmaliClassUtils.getBaseClass(smaliType).equals(smaliType)
+                && (SmaliClassUtils.isPrimitiveType(smaliType)
+                || "Ljava/lang/String;".equals(smaliType)
+                || "Ljava/lang/Class;".equals(smaliType));
+    }
+
+    private boolean canMakeArraySimpleConstant(String smaliType) {
+        return SmaliClassUtils.getBaseClass(smaliType).equals(smaliType.substring(1))
+                && (SmaliClassUtils.isPrimitiveType(smaliType)
+                || "Ljava/lang/String;".equals(smaliType)
+                || "Ljava/lang/Class;".equals(smaliType));
+    }
+
+    private Opcode getOpCodeVariant(String baseOp, String smaliType) {
+        baseOp = baseOp.toUpperCase();
+
+        if ("I".equals(smaliType) || "F".equals(smaliType)) return Enum.valueOf(Opcode.class, baseOp);
+        if ("J".equals(smaliType) || "D".equals(smaliType)) return Enum.valueOf(Opcode.class, baseOp + "_WIDE");
+        if ("S".equals(smaliType)) return Enum.valueOf(Opcode.class, baseOp + "_SHORT");
+        if ("B".equals(smaliType)) return Enum.valueOf(Opcode.class, baseOp + "_BYTE");
+        if ("C".equals(smaliType)) return Enum.valueOf(Opcode.class, baseOp + "_CHAR");
+        if ("Z".equals(smaliType)) return Enum.valueOf(Opcode.class, baseOp + "_BOOLEAN");
+        return Enum.valueOf(Opcode.class, baseOp + "_OBJECT");
     }
 }
