@@ -63,4 +63,16 @@ public class IGetOp extends ExecutionContextOp {
         return sb.toString();
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return register == destRegister;
+    }
+
+    public String getFieldDescriptor() {
+        return fieldDescriptor;
+    }
+
+    public int getInstanceRegister() {
+        return instanceRegister;
+    }
 }

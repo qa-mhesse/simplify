@@ -181,4 +181,8 @@ public class ConstOp extends MethodStateOp {
         CLASS, LOCAL_CLASS, NARROW, STRING, WIDE
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return register == destRegister;
+    }
 }

@@ -148,4 +148,8 @@ public class UnaryMathOp extends MethodStateOp {
         return resultValue;
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return register == destRegister;
+    }
 }

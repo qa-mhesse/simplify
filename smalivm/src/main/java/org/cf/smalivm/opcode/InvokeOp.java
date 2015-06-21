@@ -487,4 +487,12 @@ public class InvokeOp extends ExecutionContextOp {
         return null;
     }
 
+    @Override
+    public boolean modifiesResult() {
+        return !returnType.equals("V");
+    }
+
+    public String getMethodDescriptor() {
+        return methodDescriptor;
+    }
 }

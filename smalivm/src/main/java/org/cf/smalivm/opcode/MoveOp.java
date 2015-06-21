@@ -11,7 +11,6 @@ public class MoveOp extends MethodStateOp {
 
     private final MoveType moveType;
 
-    ;
     private final int toRegister;
     private int targetRegister;
 
@@ -85,8 +84,12 @@ public class MoveOp extends MethodStateOp {
         return sb.toString();
     }
 
-    private static enum MoveType {
+    private enum MoveType {
         EXCEPTION, REGISTER, RESULT
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return register == toRegister;
+    }
 }

@@ -68,4 +68,8 @@ public class IPutOp extends ExecutionContextOp {
         return sb.toString();
     }
 
+    @Override
+    public boolean modifiesField(String fieldDescriptor) {
+        return this.fieldDescriptor.equals(fieldDescriptor);
+    }
 }

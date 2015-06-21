@@ -97,4 +97,9 @@ public class CmpOp extends MethodStateOp {
     public String toString() {
         return getName() + " r" + destRegister + ", r" + lhsRegister + ", r" + rhsRegister;
     }
+
+    @Override
+    public boolean modifiesRegister(int register) {
+        return register == destRegister;
+    }
 }

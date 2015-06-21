@@ -76,4 +76,9 @@ public class InstanceOfOp extends MethodStateOp {
     public String toString() {
         return getName() + " r" + destRegister + ", " + arg1Register + ", " + className;
     }
+
+    @Override
+    public boolean modifiesRegister(int register) {
+        return register == destRegister;
+    }
 }

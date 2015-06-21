@@ -60,4 +60,15 @@ public abstract class Op {
     @Override
     public abstract String toString();
 
+    public boolean modifiesRegister(int register) {
+        return false;
+    }
+
+    public boolean modifiesResult() {
+        return false;
+    }
+
+    public boolean modifiesField(String fieldDescriptor) {
+        return false;
+    }
 }

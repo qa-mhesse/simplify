@@ -121,4 +121,8 @@ public class FilledNewArrayOp extends MethodStateOp {
         return sb.toString();
     }
 
+    @Override
+    public boolean modifiesResult() {
+        return true;
+    }
 }

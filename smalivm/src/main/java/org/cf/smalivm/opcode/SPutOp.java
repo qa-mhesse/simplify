@@ -59,4 +59,9 @@ public class SPutOp extends ExecutionContextOp {
     public String toString() {
         return getName() + " r" + valueRegister + ", " + fieldDescriptor;
     }
+
+    @Override
+    public boolean modifiesField(String fieldDescriptor) {
+        return this.fieldDescriptor.equals(fieldDescriptor);
+    }
 }

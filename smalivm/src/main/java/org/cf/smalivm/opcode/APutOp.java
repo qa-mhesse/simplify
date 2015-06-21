@@ -153,4 +153,8 @@ public class APutOp extends MethodStateOp {
         return sb.toString();
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return register == arrayRegister;
+    }
 }

@@ -19,9 +19,8 @@ public class BinaryMathOp extends MethodStateOp {
     private static final Logger log = LoggerFactory.getLogger(BinaryMathOp.class.getSimpleName());
     private final int arg1Register;
 
-    ;
     private final int destRegister;
-    ;
+
     private final MathOperandType mathOperandType;
     private final MathOperator mathOperator;
     private int arg2Register;
@@ -376,4 +375,8 @@ public class BinaryMathOp extends MethodStateOp {
         ADD, AND, DIV, MUL, OR, REM, RSUB, SHL, SHR, SUB, USHR, XOR,
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return register == destRegister;
+    }
 }
