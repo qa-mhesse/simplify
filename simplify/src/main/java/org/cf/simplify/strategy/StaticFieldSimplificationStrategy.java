@@ -8,6 +8,7 @@ import org.cf.smalivm.context.ExecutionNode;
 import org.cf.smalivm.context.HeapItem;
 import org.cf.smalivm.type.UninitializedInstance;
 import org.cf.smalivm.type.UnknownValue;
+import org.jf.dexlib2.Format;
 import org.jf.dexlib2.Opcode;
 import org.jf.dexlib2.builder.BuilderInstruction;
 import org.jf.dexlib2.builder.instruction.BuilderInstruction21c;
@@ -66,10 +67,10 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
                     if (isPrimitive(fieldValue)) {
                         changes |= substitutePrimitiveField(last.getAddress(), className, fieldName, field);
                     } else if (fieldValue.getClass().isArray()) {
-                        changes |= substituteArrayField(last.getAddress(), className, fieldName, field);
+                        changes |= substituteArrayField(last, className, fieldName, field);
                     } else {
                         System.out.println(fieldName + ": object (" + fieldValue.getClass() + ") = " + fieldValue);
-                        changes = substituteObjectField(last.getAddress(), className, fieldName, field);
+                        changes = substituteObjectField(last, className, fieldName, field);
                     }
                 }
             }
@@ -107,14 +108,14 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
         return true;
     }
 
-    private boolean substituteArrayField(int lastAddress, String className, String fieldName, HeapItem field) {
+    private boolean substituteArrayField(ExecutionNode lastAddress, String className, String fieldName, HeapItem field) {
         int i = 0;
         boolean changes = false;
 
         String realFieldName = fieldName.substring(0, fieldName.length() - field.getType().length() - 1);
         BuilderFieldReference bfr = mbgraph.getDexBuilder().internFieldReference(mbgraph.getVM().getClassManager().getField(className, realFieldName));
         BuilderInstruction getArray = new BuilderInstruction21c(Opcode.SGET_OBJECT, 0, bfr);
-        mbgraph.insertInstruction(lastAddress, getArray);
+        mbgraph.insertInstruction(lastAddress.getAddress(), getArray);
 
         for (Object o : (Object[]) field.getValue()) {
             if (o instanceof UnknownValue) continue;
@@ -123,9 +124,9 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
                 BuilderInstruction createStatic = ConstantBuilder.buildConstant(o, field.getType().substring(1), 2, mbgraph.getDexBuilder());
                 BuilderInstruction assignStatic = new BuilderInstruction23x((isWide(o) ? Opcode.APUT_WIDE : Opcode.APUT), 2, 0, 1);
 
-                mbgraph.insertInstruction(lastAddress, arrayIndex);
-                mbgraph.insertInstruction(lastAddress, createStatic);
-                mbgraph.insertInstruction(lastAddress, assignStatic);
+                mbgraph.insertInstruction(lastAddress.getAddress(), arrayIndex);
+                mbgraph.insertInstruction(lastAddress.getAddress(), createStatic);
+                mbgraph.insertInstruction(lastAddress.getAddress(), assignStatic);
 
                 decryptCount++;
                 insertedInstructionsCount += 3;
@@ -142,16 +143,16 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
 
         if (changes) {
             BuilderInstruction putArray = new BuilderInstruction21c(Opcode.SPUT_OBJECT, 0, bfr);
-            mbgraph.insertInstruction(lastAddress, putArray);
+            mbgraph.insertInstruction(lastAddress.getAddress(), putArray);
             insertedInstructionsCount += 2;
         } else {
-            mbgraph.removeInstruction(lastAddress);
+            mbgraph.removeInstruction(lastAddress.getAddress());
         }
 
         return changes;
     }
 
-    private boolean substituteObjectField(int last, String className, String fieldName, HeapItem field) {
+    private boolean substituteObjectField(ExecutionNode last, String className, String fieldName, HeapItem field) {
         // TODO: set field to value
         return false;
     }
