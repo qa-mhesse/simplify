@@ -4,9 +4,11 @@ import org.jf.dexlib2.builder.BuilderExceptionHandler;
 import org.jf.dexlib2.builder.BuilderTryBlock;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.stubbing.OngoingStubbing;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -47,7 +49,7 @@ public class ExceptionHandlerAddressResolverTest {
         classManager = mock(ClassManager.class);
         when(classManager.getClassAncestors(EXCEPTION3)).thenReturn(new HashSet<>(Arrays.asList(EXCEPTION2)));
         when(classManager.getClassAncestors(EXCEPTION2)).thenReturn(new HashSet<>(Arrays.asList(EXCEPTION1)));
-        when(classManager.getClassAncestors(EXCEPTION1)).thenReturn(new HashSet<String>())
+        when(classManager.getClassAncestors(EXCEPTION1)).thenReturn(new HashSet<String>());
         when(classManager.getTryBlocks(METHOD)).thenReturn(tryBlocks);
     }
 

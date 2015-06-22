@@ -256,6 +256,11 @@ public class InvokeOp extends ExecutionContextOp {
         return sb.toString();
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return false;
+    }
+
     private boolean allArgumentsKnown(MethodState mState) {
         for (int parameterRegister = mState.getParameterStart(); parameterRegister < mState.getRegisterCount(); ) {
             HeapItem item = mState.peekParameter(parameterRegister);
@@ -485,11 +490,6 @@ public class InvokeOp extends ExecutionContextOp {
         }
 
         return null;
-    }
-
-    @Override
-    public boolean modifiesResult() {
-        return !returnType.equals("V");
     }
 
     public String getMethodDescriptor() {

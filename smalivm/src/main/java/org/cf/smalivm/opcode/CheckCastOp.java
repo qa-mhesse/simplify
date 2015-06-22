@@ -89,4 +89,9 @@ public class CheckCastOp extends MethodStateOp {
         return sb.toString();
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return false;
+    }
+
 }

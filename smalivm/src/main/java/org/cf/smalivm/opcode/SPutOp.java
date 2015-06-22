@@ -61,7 +61,8 @@ public class SPutOp extends ExecutionContextOp {
     }
 
     @Override
-    public boolean modifiesField(String fieldDescriptor) {
-        return this.fieldDescriptor.equals(fieldDescriptor);
+    public boolean modifiesRegister(int register) {
+        return false;
     }
+
 }

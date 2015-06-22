@@ -96,6 +96,11 @@ public class SwitchPayloadOp extends MethodStateOp {
         return sb.toString();
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return false;
+    }
+
     private int getTargetAddress(int switchOpAddress, int offset) {
         // Offsets are from switch op's address.
         return switchOpAddress + offset;

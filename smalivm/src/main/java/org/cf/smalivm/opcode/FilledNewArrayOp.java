@@ -122,7 +122,8 @@ public class FilledNewArrayOp extends MethodStateOp {
     }
 
     @Override
-    public boolean modifiesResult() {
-        return true;
+    public boolean modifiesRegister(int register) {
+        return false;
     }
+
 }

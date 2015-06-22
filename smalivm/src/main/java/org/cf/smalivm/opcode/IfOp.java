@@ -156,6 +156,11 @@ public class IfOp extends MethodStateOp {
         return sb.toString();
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return false;
+    }
+
     private static enum IfType {
         EQUAL, GREATER, GREATOR_OR_EQUAL, LESS, LESS_OR_EQUAL, NOT_EQUAL
     }

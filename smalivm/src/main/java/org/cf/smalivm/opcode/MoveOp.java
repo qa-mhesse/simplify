@@ -84,12 +84,16 @@ public class MoveOp extends MethodStateOp {
         return sb.toString();
     }
 
-    private enum MoveType {
+    public enum MoveType {
         EXCEPTION, REGISTER, RESULT
     }
 
     @Override
     public boolean modifiesRegister(int register) {
         return register == toRegister;
+    }
+
+    public MoveType getMoveType() {
+        return moveType;
     }
 }

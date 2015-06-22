@@ -35,4 +35,9 @@ public class NopOp extends MethodStateOp {
         return getName();
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return false;
+    }
+
 }

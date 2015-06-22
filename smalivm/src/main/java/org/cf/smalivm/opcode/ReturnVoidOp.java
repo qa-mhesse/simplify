@@ -31,4 +31,9 @@ public class ReturnVoidOp extends MethodStateOp {
         return getName();
     }
 
+    @Override
+    public boolean modifiesRegister(int register) {
+        return false;
+    }
+
 }

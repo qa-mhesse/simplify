@@ -157,4 +157,8 @@ public class APutOp extends MethodStateOp {
     public boolean modifiesRegister(int register) {
         return register == arrayRegister;
     }
+
+    public int getIndex() {
+        return indexRegister;
+    }
 }
