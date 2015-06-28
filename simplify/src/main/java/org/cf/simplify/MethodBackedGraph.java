@@ -7,6 +7,7 @@ import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
+import org.apache.commons.lang3.ArrayUtils;
 import org.cf.smalivm.VirtualMachine;
 import org.cf.smalivm.context.ExecutionContext;
 import org.cf.smalivm.context.ExecutionGraph;
@@ -183,6 +184,39 @@ public class MethodBackedGraph extends ExecutionGraph {
         indexes.reverse();
         for (int index : indexes.toArray()) {
             tryBlocks.remove(index);
+        }
+    }
+
+    public void removeUnnecessaryCode(ExecutionNode firstKeep, ExecutionNode lastKeep) {
+        int[] addr = getAddresses();
+        Arrays.sort(addr);
+        ArrayUtils.reverse(addr);
+
+        for (int address : getAddresses()) {
+            if (firstKeep.getAddress() <= address && address <= lastKeep.getAddress()) continue;
+
+            List<ExecutionNode> nodePile = addressToNodePile.get(address);
+            BuilderInstruction instr = addressToInstruction.get(address);
+            MethodLocation loc = instr.getLocation();
+            loc.getDebugItems().clear();
+
+            int codeUnits = -instr.getCodeUnits();
+            implementation.removeInstruction(loc.getIndex());
+            Utils.shiftIntegerMapKeys(address, codeUnits, addressToInstruction);
+
+            for (ExecutionNode removedNode : nodePile) {
+                ExecutionNode parentNode = removedNode.getParent();
+                if (parentNode != null) {
+                    parentNode.removeChild(removedNode);
+                }
+                for (ExecutionNode childNode : removedNode.getChildren()) {
+                    // parentNode could be null, and that's ok
+                    childNode.setParent(parentNode);
+                }
+
+            }
+
+            shiftNodePileAddresses(address, codeUnits);
         }
     }
 

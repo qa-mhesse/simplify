@@ -1,7 +1,5 @@
 package org.cf.simplify.strategy;
 
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
 import org.cf.simplify.ConstantBuilder;
 import org.cf.simplify.MethodBackedGraph;
 import org.cf.smalivm.context.ClassState;
@@ -12,6 +10,7 @@ import org.cf.smalivm.opcode.*;
 import org.cf.smalivm.type.UninitializedInstance;
 import org.cf.smalivm.type.UnknownValue;
 import org.cf.util.SmaliClassUtils;
+import org.cf.util.Utils;
 import org.jf.dexlib2.Opcode;
 import org.jf.dexlib2.builder.BuilderInstruction;
 import org.jf.dexlib2.builder.instruction.*;
@@ -105,119 +104,12 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
     }
 
     private void removeUnnecessaryInstructions(ExecutionNode last) {
-        // remove all switch / switch-payload instructions first
-        while (true) {
-            TIntList addresses = new TIntArrayList(graph.getAddresses());
-            addresses.sort();
-            int[] addrs = addresses.toArray();
-
-            boolean removedInstruction = false;
-            for (int i = 0; i < addrs.length && !removedInstruction; i++) {
-                Op o = graph.getTemplateNode(addrs[i]).getOp();
-                if (o instanceof SwitchOp || o instanceof SwitchPayloadOp) {
-                    try {
-                        graph.removeInstruction(addrs[i]);
-                        removedInstruction = true;
-
-                        if (log.isInfoEnabled()) {
-                            log.info("removed " + o.toString() + " @" + addrs[i]);
-                        }
-                    } catch (IndexOutOfBoundsException | NullPointerException | IllegalStateException e) {
-                        log.warn("tried to remove switch instruction which isn't there: " + o.toString() + " @" + addrs[i]);
-                    }
-                }
-            }
-            if (!removedInstruction) break;
+        ExecutionNode first = last;
+        for (int i = 0; i < insertedInstructions; i++) {
+            first = first.getParent();
         }
 
-        // then remove all goto instructions
-        while (true) {
-            TIntList addresses = new TIntArrayList(graph.getAddresses());
-            addresses.sort();
-            int[] addrs = addresses.toArray();
-
-            boolean removedInstruction = false;
-            for (int i = 0; i < addrs.length && !removedInstruction; i++) {
-                Op o = graph.getTemplateNode(addrs[i]).getOp();
-                if (o instanceof GotoOp) {
-                    try {
-                        graph.removeInstruction(addrs[i]);
-                        removedInstruction = true;
-
-                        if (log.isInfoEnabled()) {
-                            log.info("removed " + o.toString() + " @" + addrs[i]);
-                        }
-                    } catch (IndexOutOfBoundsException | NullPointerException | IllegalStateException e) {
-                        log.warn("tried to remove goto instruction which isn't there: " + o.toString() + " @" + addrs[i]);
-                    }
-                }
-            }
-            if (!removedInstruction) break;
-        }
-
-        // thirdly remove all if instructions
-        while (true) {
-            TIntList addresses = new TIntArrayList(graph.getAddresses());
-            addresses.sort();
-            int[] addrs = addresses.toArray();
-
-            boolean removedInstruction = false;
-            for (int i = 0; i < addrs.length && !removedInstruction; i++) {
-                Op o = graph.getTemplateNode(addrs[i]).getOp();
-                if (o instanceof IfOp) {
-                    try {
-                        graph.removeInstruction(addrs[i]);
-                        removedInstruction = true;
-
-                        if (log.isInfoEnabled()) {
-                            log.info("removed " + o.toString() + " @" + addrs[i]);
-                        }
-                    } catch (IndexOutOfBoundsException | NullPointerException | IllegalStateException e) {
-                        log.warn("tried to remove if instruction which isn't there: " + o.toString() + " @" + addrs[i]);
-                    }
-                }
-            }
-            if (!removedInstruction) break;
-        }
-
-        // remove all other instructions that we don't need
-        while (true) {
-            TIntList addresses = new TIntArrayList(graph.getAddresses());
-            addresses.sort();
-            int[] addrs = addresses.toArray();
-
-            boolean removedInstruction = false;
-
-            // recalculate addresses we don't want to remove
-            ExecutionNode first = last;
-            int[] protect = new int[insertedInstructions + 1];
-            for (int i = 0; i <= insertedInstructions; i++) {
-                protect[i] = first.getAddress();
-                first = first.getParent();
-            }
-
-            for (int i = 0; i < addrs.length && !removedInstruction; i++) {
-                boolean canBeRemoved = true;
-                for (int j = 0; j <= insertedInstructions; j++) {
-                    if (addrs[i] == protect[j]) canBeRemoved = false;
-                }
-
-                if (canBeRemoved) {
-                    try {
-                        String op = graph.getTemplateNode(addrs[i]).getOp().toString();
-                        graph.removeInstruction(addrs[i]);
-                        removedInstruction = true;
-
-                        if (log.isInfoEnabled()) {
-                            log.info("removed " + op + " @" + addrs[i]);
-                        }
-                    } catch (IndexOutOfBoundsException | NullPointerException | IllegalStateException e) {
-                        log.warn("tried to remove instruction which isn't there: @" + addrs[i]);
-                    }
-                }
-            }
-            if (!removedInstruction) break;
-        }
+        graph.removeUnnecessaryCode(first, last);
 
         System.out.println(graph.toSmali());
     }
@@ -251,11 +143,14 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
         BuilderInstruction putArray = new BuilderInstruction21c(Opcode.SPUT_OBJECT, 0, bfr);
         insert(last.getAddress(), putArray);
 
+        if (success && log.isInfoEnabled()) {
+            log.info("Directly set primitive array field " + fieldName + " to [ .. ]");
+        }
+
         return success;
     }
 
     private boolean substitutePrimitiveArrayRegister(ExecutionNode last, int register, HeapItem field) {
-        log.info(field.getValue().toString() + field.getValue().getClass().isArray());
         BuilderInstruction arraySize = ConstantBuilder.buildConstant(Array.getLength(field.getValue()), "I", 1, graph.getDexBuilder());
         BuilderInstruction newArray = new BuilderInstruction22c(Opcode.NEW_ARRAY, register, 1, graph.getDexBuilder().internTypeReference(field.getType()));
         insert(last.getAddress(), arraySize);
@@ -569,7 +464,7 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
                 throw new UnsupportedOperationException("This operation is not yet supported for simplification: " + current.getOp().toString());
         }
 
-        insert(last.getAddress(), instr);
+        insert(last.getAddress(), Utils.cloneInstruction(instr));
         return true;
     }
 
