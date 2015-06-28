@@ -324,7 +324,7 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
             BuilderInstruction arrayIndex = ConstantBuilder.buildConstant(index, "I", indexRegister, graph.getDexBuilder());
 
             insert(last.getAddress(), arrayIndex);
-            insert(last.getAddress(), bi23x);
+            insert(last.getAddress(), Utils.cloneInstruction(bi23x));
         }
 
         return success;
@@ -373,7 +373,7 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
                     } else if (canMakeArraySimpleConstant(types.get(i))) {
                         //success = traceBackPrimitiveArray(last, current, r, types.get(i));
                         log.info("parameter[" + i + "] " + r + " type " + types.get(i) + " directly as array");
-                        log.info(current.getContext().getMethodState().toString());
+                        //log.info(current.getContext().getMethodState().toString());
                         success = substitutePrimitiveArrayRegister(last, r, current.getContext().getMethodState().peekRegister(r));
                     } else {
                         success = traceBackNonPrimitiveRegister(last, current, r, types.get(i));
@@ -437,7 +437,7 @@ public class StaticFieldSimplificationStrategy implements OptimizationStrategy {
                         i++;
                     }
 
-                    insert(last.getAddress(), instr2);
+                    insert(last.getAddress(), Utils.cloneInstruction(instr2));
                 } else if (mt == MoveOp.MoveType.REGISTER) {
                     if (!traceBackNonPrimitiveRegister(last, current, ((TwoRegisterInstruction) instr).getRegisterB(), smaliType))
                         return false;
